@@ -4,7 +4,7 @@ A tap list display and management system for a home kegerator, built for a
 Raspberry Pi 5 with a touch display.
 
 - **The display (what guests see).** A chalkboard with one column per tap: a brass
-  medallion (the beer's logo, or the tap number), the name in chalk handwriting, style
+  medallion (the beer's logo, or the tap number), the name, style
   and ABV, and a keg gauge filled with the beer's real color (from its SRM, or
   red/white/rosé for wine) showing % and gallons left. It bubbles while someone is
   pouring. The wine tap has a **Charge CO2** button, and the cabinet temperature sits
@@ -244,7 +244,7 @@ backend/
     hardware/      temperature.py (DS18B20), flow.py (meters), relay.py (CO₂) + mock versions
   config.example.toml   copied to data/config.toml on first start
 frontend/
-  index.html, static/   chalkboard display + console (plain JS), bundled fonts (Caveat, Barlow Condensed)
+  index.html, static/   chalkboard display + console (plain JS), bundled font (Barlow Condensed)
   nginx.conf            serves the UI, proxies /api to the backend
 deploy/
   push.sh        rsync to the Pi + docker compose up -d --build

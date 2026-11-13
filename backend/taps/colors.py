@@ -38,6 +38,17 @@ KIND_DEFAULTS = {
 
 KINDS = list(KIND_DEFAULTS)
 
+STILL_KINDS = {"wine", "cold brew", "other"}
+
+
+def has_bubbles(kind: str | None, color: str | None, bubbles: int | None) -> bool:
+    """Whether the keg gauge shows bubbles. An explicit setting wins; otherwise go by the kind."""
+    if bubbles is not None:
+        return bool(bubbles)
+    if (color or "").strip().lower() == "sparkling":
+        return True
+    return (kind or "beer").lower() not in STILL_KINDS
+
 
 def srm_to_hex(srm: float) -> str:
     i = max(1, min(40, round(srm)))

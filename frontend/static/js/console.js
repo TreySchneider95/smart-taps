@@ -197,12 +197,23 @@
           <button class="btn big danger ${ui.kickArmed ? "confirm" : ""}" id="kick">${ui.kickArmed ? "Tap again to confirm" : "Tapped out"}</button>
         </div>
         ${levelHTML(t)}
+        ${bubbleToggleHTML(b)}
         ${co2HTML(t)}`;
       d.querySelectorAll("[data-level]").forEach((c) =>
         c.addEventListener("click", async () => {
           try {
             await api(`/api/taps/${t.id}/level`, { percent: Number(c.dataset.level) });
             toast(`Tap ${t.id} set to ${c.dataset.level}%`);
+          } catch (e) { toast(e.message, true); }
+        })
+      );
+      d.querySelectorAll("[data-bubbles]").forEach((c) =>
+        c.addEventListener("click", async () => {
+          const on = c.dataset.bubbles === "1";
+          if (on === b.bubbles) return;
+          try {
+            await api(`/api/beers/${b.id}/bubbles`, { on });
+            toast(on ? `Bubbles on for ${b.name}` : `${b.name} is still now`);
           } catch (e) { toast(e.message, true); }
         })
       );
@@ -239,6 +250,17 @@
       <div class="panel-row">
         <div class="label"><b>How full is it?</b><div>No flow meter on this tap yet, so set the gauge by eye.</div></div>
         <div class="chips" style="margin:0">${chips}</div>
+      </div>`;
+  }
+
+  function bubbleToggleHTML(b) {
+    return `
+      <div class="panel-row">
+        <div class="label"><b>Bubbles</b><div>Fizz in the keg gauge. Turn off for still wine and the like.</div></div>
+        <div class="chips" style="margin:0">
+          <button class="chip ${b.bubbles ? "on" : ""}" data-bubbles="1">On</button>
+          <button class="chip ${!b.bubbles ? "on" : ""}" data-bubbles="0">Off</button>
+        </div>
       </div>`;
   }
 
@@ -338,7 +360,7 @@
       <div class="confirm-card" style="--pour:${b.color_hex}">
         ${swatch(b)}
         <div>
-          <div class="b-name" style="font-family:var(--hand);font-size:38px;font-weight:700;line-height:1">${esc(b.name)}</div>
+          <div class="b-name" style="font-size:42px;font-weight:700;line-height:1.05">${esc(b.name)}</div>
           <div class="sub">${esc([b.maker, b.style, b.abv != null ? b.abv + "%" : null].filter(Boolean).join(" · "))}</div>
         </div>
       </div>
@@ -367,7 +389,7 @@
 
   // ---------- live updates while open ----------
   function detailKey(t) {
-    return JSON.stringify([t.beer?.id, t.beer?.logo_url, t.keg?.id, t.keg && Math.round(t.keg.remaining_pct * 100), t.co2?.active]);
+    return JSON.stringify([t.beer?.id, t.beer?.logo_url, t.beer?.bubbles, t.keg?.id, t.keg && Math.round(t.keg.remaining_pct * 100), t.co2?.active]);
   }
 
   app.onState(() => {

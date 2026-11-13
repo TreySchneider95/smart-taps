@@ -17,7 +17,7 @@ import sys
 from datetime import datetime
 
 from . import config as config_mod
-from .colors import KINDS, display_color, parse_color_input
+from .colors import KINDS, display_color, has_bubbles, parse_color_input
 from .db import BEER_FIELDS, KEG_SIZES, Database
 
 TTY = sys.stdout.isatty()
@@ -88,6 +88,15 @@ def number(raw: str) -> float:
     return float(raw.rstrip("%"))
 
 
+def yes_no(raw: str) -> bool:
+    r = raw.lower()
+    if r in ("y", "yes", "on", "true", "1"):
+        return True
+    if r in ("n", "no", "off", "false", "0"):
+        return False
+    raise ValueError("y or n")
+
+
 def prompt_beer(existing: dict | None = None) -> dict:
     e = existing or {}
     print(dim("  (Enter keeps the value in [brackets]; '-' clears it)\n") if existing else "")
@@ -113,6 +122,11 @@ def prompt_beer(existing: dict | None = None) -> dict:
         except ValueError as err:
             print(_c("33", f"    {err}"))
     data["description"] = ask("Tasting notes (one or two lines)", e.get("description"))
+    auto = has_bubbles(data["kind"], data["color"], e.get("bubbles"))
+    on = ask("Bubbles in the keg gauge? (y/n)", "y" if auto else "n", yes_no)
+    on = yes_no(on) if isinstance(on, str) else auto if on is None else on
+    # only store it when it differs from what the kind implies, so the default keeps working
+    data["bubbles"] = None if on == has_bubbles(data["kind"], data["color"], None) else int(on)
     return data
 
 
@@ -150,6 +164,7 @@ def cmd_add(db: Database, cfg, args):
         data = {
             "name": args.name, "maker": args.maker, "style": args.style, "kind": args.kind,
             "abv": args.abv, "ibu": args.ibu, "srm": srm, "color": color, "description": args.notes,
+            "bubbles": None if args.bubbles is None else int(args.bubbles),
         }
     else:
         print(brass("\n  New beer\n"))
@@ -398,6 +413,8 @@ def main(argv=None):
     s.add_argument("--abv", type=float); s.add_argument("--ibu", type=float)
     s.add_argument("--color", help="SRM number, word (amber, black, red...) or #hex")
     s.add_argument("--notes")
+    s.add_argument("--bubbles", action=argparse.BooleanOptionalAction, default=None,
+                   help="bubbles in the keg gauge (default: on for beer/cider/seltzer, off for still wine)")
     s.add_argument("--tap", type=int, help="also put it on this tap")
     s.add_argument("--keg", choices=list(KEG_SIZES))
 

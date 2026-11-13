@@ -38,6 +38,7 @@ CREATE TABLE IF NOT EXISTS beers (
     color       TEXT,
     description TEXT,
     logo        TEXT,
+    bubbles     INTEGER,
     archived    INTEGER NOT NULL DEFAULT 0,
     created_at  TEXT NOT NULL,
     updated_at  TEXT NOT NULL
@@ -66,7 +67,7 @@ CREATE TABLE IF NOT EXISTS pours (
 CREATE INDEX IF NOT EXISTS kegs_beer ON kegs(beer_id);
 """
 
-BEER_FIELDS = ("name", "maker", "style", "kind", "abv", "ibu", "srm", "color", "description", "logo")
+BEER_FIELDS = ("name", "maker", "style", "kind", "abv", "ibu", "srm", "color", "description", "logo", "bubbles")
 
 
 def now() -> str:
@@ -100,6 +101,8 @@ class Database:
             cols = {r["name"] for r in c.execute("PRAGMA table_info(beers)")}
             if "logo" not in cols:
                 c.execute("ALTER TABLE beers ADD COLUMN logo TEXT")
+            if "bubbles" not in cols:  # NULL = decide from the kind (see colors.has_bubbles)
+                c.execute("ALTER TABLE beers ADD COLUMN bubbles INTEGER")
             for tid in tap_ids:
                 c.execute("INSERT OR IGNORE INTO taps (id) VALUES (?)", (tid,))
 
@@ -172,7 +175,7 @@ class Database:
         sql = """
             SELECT t.id AS tap_id, k.id AS keg_id, k.size_ml, k.poured_ml, k.tapped_at,
                    b.id AS beer_id, b.name, b.maker, b.style, b.kind, b.abv, b.ibu, b.srm,
-                   b.color, b.description, b.logo
+                   b.color, b.description, b.logo, b.bubbles
             FROM taps t
             LEFT JOIN kegs k ON k.id = t.keg_id
             LEFT JOIN beers b ON b.id = k.beer_id

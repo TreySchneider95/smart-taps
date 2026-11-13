@@ -51,6 +51,16 @@
     return [what, b.abv != null ? `${Number(b.abv).toFixed(1).replace(/\.0$/, "")}% ABV` : null].filter(Boolean).join(" · ");
   }
 
+  // A handful of bubbles hugging the keg's sides, each with its own size, pace and start.
+  function bubblesHTML() {
+    const rand = (lo, hi) => lo + Math.random() * (hi - lo);
+    return Array.from({ length: 6 }, (_, i) => {
+      const x = i % 2 ? rand(72, 88) : rand(5, 20); // alternate left / right edge (%)
+      const d = rand(9, 16);                         // full cycle in seconds (rising is ~40% of it)
+      return `<i style="--x:${x.toFixed(1)}%;--s:${rand(2.5, 5.5).toFixed(1)}px;--d:${d.toFixed(1)}s;--t:${(-rand(0, d)).toFixed(1)}s"></i>`;
+    }).join("");
+  }
+
   function columnKey(tap) {
     const b = tap.beer;
     return [b?.id, b?.name, b?.style, b?.kind, b?.abv, b?.color_hex, b?.logo_url, !!tap.co2].join("|");
@@ -73,7 +83,7 @@
         <div class="tap__sub">${b ? esc(subLine(b)) : "Next one soon"}</div>
       </div>
       <div class="gauge-wrap">
-        <div class="keg"><div class="keg__fill"></div></div>
+        <div class="keg"><div class="keg__fill"><div class="keg__bubbles">${bubblesHTML()}</div></div></div>
         <div class="tap__pct"></div>
         <div class="tap__amt"></div>
       </div>
@@ -86,9 +96,13 @@
     else el.style.removeProperty("--pour");
     el.classList.toggle("empty", !b);
     el.classList.toggle("pouring", !!tap.pouring);
+    el.classList.toggle("still", !!b && b.bubbles === false);
 
     const pct = b && tap.keg ? Math.max(0, Math.min(1, tap.keg.remaining_pct ?? 0)) : 0;
-    $(".keg__fill", el).style.setProperty("--level", `${pct * 100}%`);
+    const fill = $(".keg__fill", el);
+    fill.style.setProperty("--level", `${pct * 100}%`);
+    // shorter column -> quicker trip to the top; stepped so pours don't make bubbles jump
+    fill.style.setProperty("--rise", Math.max(0.3, Math.ceil(pct * 10) / 10));
     el.classList.toggle("low", !!b && pct < 0.15);
     $(".tap__pct", el).textContent = b ? `${Math.round(pct * 100)}%` : "—";
     $(".tap__amt", el).textContent = !b ? "" : tap.pouring ? "Pouring…" : app.remainingText(tap);

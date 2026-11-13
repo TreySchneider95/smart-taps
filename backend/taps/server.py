@@ -14,7 +14,7 @@ from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel
 
 from . import config as config_mod
-from .colors import color_label, display_color
+from .colors import color_label, display_color, has_bubbles
 from .db import KEG_SIZES, Database
 from .hardware import Hardware
 
@@ -41,6 +41,10 @@ class PinBody(BaseModel):
 
 class LevelBody(BaseModel):
     percent: float
+
+
+class BubblesBody(BaseModel):
+    on: bool
 
 
 def logo_url(name: str | None) -> str | None:
@@ -120,6 +124,7 @@ def create_app(cfg: config_mod.Config | None = None) -> FastAPI:
                     "color_hex": display_color(r["kind"], r["srm"], r["color"]),
                     "color_label": color_label(r["kind"], r["srm"], r["color"]),
                     "logo_url": logo_url(r["logo"]),
+                    "bubbles": has_bubbles(r["kind"], r["color"], r["bubbles"]),
                 }
             if r.get("keg_id"):
                 remaining = max(0.0, r["size_ml"] - r["poured_ml"])
@@ -176,6 +181,7 @@ def create_app(cfg: config_mod.Config | None = None) -> FastAPI:
         for b in db.list_beers():
             b["color_hex"] = display_color(b["kind"], b["srm"], b["color"])
             b["logo_url"] = logo_url(b["logo"])
+            b["bubbles"] = has_bubbles(b["kind"], b["color"], b["bubbles"])
             out.append(b)
         return out
 
@@ -213,6 +219,13 @@ def create_app(cfg: config_mod.Config | None = None) -> FastAPI:
         if not r or not r["keg_id"]:
             raise HTTPException(400, "No keg on this tap")
         db.set_level(tap_id, r["size_ml"] * max(0.0, min(100.0, body.percent)) / 100)
+        return {"ok": True}
+
+    @app.post("/api/beers/{beer_id}/bubbles", dependencies=[Depends(require_pin)])
+    def bubbles(beer_id: int, body: BubblesBody):
+        if not db.get_beer(beer_id):
+            raise HTTPException(404, "No such beer")
+        db.update_beer(beer_id, {"bubbles": int(body.on)})
         return {"ok": True}
 
     # Not PIN-protected: the Charge CO2 button lives on the main screen for whoever is pouring wine.

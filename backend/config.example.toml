@@ -3,7 +3,7 @@
 #   docker compose restart backend
 
 [bar]
-name = "On Tap"               # the big handwritten title
+name = "On Tap"               # the big title
 tagline = "The Basement Bar"  # small caps underneath
 
 [display]
