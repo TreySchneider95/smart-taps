@@ -1,0 +1,49 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
+  <title>On Tap</title>
+  <link rel="icon" href="data:,">
+  <link rel="stylesheet" href="/static/css/app.css">
+</head>
+<body>
+  <header class="board__header">
+    <h1 class="brand"><span id="barName">On Tap</span><span class="brand__sub" id="barTag">The Basement Bar</span></h1>
+    <div class="header-right">
+      <div class="freezer" id="temp" hidden>
+        <svg class="freezer__icon" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+          <path d="M12 2v20M5 6l14 12M19 6L5 18M2 12h20" stroke-width="1.6" stroke-linecap="round"/>
+        </svg>
+        <div>
+          <div class="freezer__temp" id="tempVal">--</div>
+          <div class="freezer__label" id="tempLabel">Cabinet Temp</div>
+        </div>
+      </div>
+      <button class="gear" id="openConsole" aria-label="Open tap console">
+        <svg viewBox="0 0 24 24" aria-hidden="true"><path fill="none" stroke="currentColor" stroke-width="1.6" d="M12 15.5a3.5 3.5 0 1 0 0-7 3.5 3.5 0 0 0 0 7zm7.4-2.1.1-1.4-.1-1.4 2-1.6-2-3.4-2.4.9a7.6 7.6 0 0 0-2.4-1.4L14.2 2h-4.4l-.4 2.6a7.6 7.6 0 0 0-2.4 1.4l-2.4-.9-2 3.4 2 1.6-.1 1.4.1 1.4-2 1.6 2 3.4 2.4-.9a7.6 7.6 0 0 0 2.4 1.4l.4 2.6h4.4l.4-2.6a7.6 7.6 0 0 0 2.4-1.4l2.4.9 2-3.4z"/></svg>
+      </button>
+    </div>
+  </header>
+
+  <main class="taps" id="taps"></main>
+  <div class="offline" id="offline" hidden>reconnecting…</div>
+
+  <!-- Management console (opened with the gear) -->
+  <section class="console" id="console" hidden>
+    <header class="console-head">
+      <div>
+        <div class="eyebrow">Management</div>
+        <h1>Tap Console</h1>
+      </div>
+      <button class="btn ghost" id="closeConsole">Done</button>
+    </header>
+    <div class="console-body" id="consoleBody"></div>
+    <footer class="console-foot" id="consoleFoot"></footer>
+  </section>
+  <div class="toast" id="toast" hidden></div>
+
+  <script src="/static/js/display.js"></script>
+  <script src="/static/js/console.js"></script>
+</body>
+</html>

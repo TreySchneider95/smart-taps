@@ -1,0 +1,6 @@
+fastapi==0.162.4
+uvicorn[standard]==0.54.0
+pydantic==2.14.3
+# GPIO for flow meters / CO2 relay (Pi 5). Imported only when that hardware is configured.
+gpiozero==2.0.1.post3
+lgpio==0.2.2.0; sys_platform == "linux"

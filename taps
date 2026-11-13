@@ -1,0 +1,4 @@
+#!/bin/sh
+# Run the `taps` management CLI inside the backend container, from anywhere:
+#   ./taps add        ./taps        ./taps tap 2 pliny
+cd "$(dirname "$0")" && exec docker compose exec backend taps "$@"

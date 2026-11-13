@@ -1,0 +1,61 @@
+# Smart Taps configuration — this file lives at data/config.toml.
+# It's created automatically on first start. After editing, restart:
+#   docker compose restart backend
+
+[bar]
+name = "On Tap"               # the big handwritten title
+tagline = "The Basement Bar"  # small caps underneath
+
+[display]
+temperature_unit = "F"    # "F" or "C"
+volume_unit = "gal"       # how "left in keg" is shown: "gal", "pint", or "l"
+default_keg = "corny"     # corny | sixtel | quarter | half | mini  (see `taps kegs`)
+admin_pin = ""            # e.g. "4321" to lock the on-screen console from guests
+                          # (the Charge CO2 button on the main screen is always available)
+
+[hardware]
+# mock = true simulates the temperature sensor, flow meters and CO2 relay so you
+# can develop on a Mac. On the Pi leave this false.
+mock = false
+# With mock = true, occasionally fake a pour so you can see the animation.
+demo_pours = false
+# GPIO chip for the 40-pin header. Pi 5 on current Raspberry Pi OS = 0.
+gpio_chip = 0
+
+[temperature]
+# DS18B20 1-wire probe. Enable 1-wire on the Pi first (see README).
+enabled = false
+sensor_id = ""           # e.g. "28-0123456789ab"; blank = first sensor found
+poll_seconds = 10
+target_low = 34.0        # in the display unit above
+target_high = 40.0
+
+# One block per tap, left to right as they appear on the screen.
+#   flow_pin          BCM GPIO pin of the flow meter signal wire (0 = no meter)
+#   pulses_per_liter  calibrate after install (`taps calibrate` in README)
+#   co2_relay_pin     BCM GPIO pin driving the CO2 relay (0 = no relay)
+# Suggested wiring (see README): flow meters on 17, 27, 22, 23; CO2 relay on 24; DS18B20 on 4.
+
+[[taps]]   # the wine tap: gets the Charge CO2 button
+id = 1
+flow_pin = 0
+pulses_per_liter = 5600
+co2_relay_pin = 0
+co2_relay_active_high = false   # most cheap relay boards are active-low
+co2_boost_seconds = [2, 5]      # first one is the main-screen button; console shows all
+co2_max_seconds = 10            # hard safety cap per boost
+
+[[taps]]
+id = 2
+flow_pin = 0
+pulses_per_liter = 5600
+
+[[taps]]
+id = 3
+flow_pin = 0
+pulses_per_liter = 5600
+
+[[taps]]
+id = 4
+flow_pin = 0
+pulses_per_liter = 5600

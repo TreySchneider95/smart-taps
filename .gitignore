@@ -1,0 +1,8 @@
+data/
+.env
+docker-compose.override.yml
+backend/.venv/
+.venv/
+__pycache__/
+*.pyc
+.DS_Store

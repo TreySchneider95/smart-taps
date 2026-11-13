@@ -1,0 +1,9 @@
+# Sensor access for the Raspberry Pi. Not needed until you wire up hardware.
+# Enable it once by copying it to docker-compose.override.yml (which `docker compose up` loads automatically):
+#   cp docker-compose.pi-hardware.yml docker-compose.override.yml
+services:
+  backend:
+    devices:
+      # 40-pin header GPIO (flow meters, CO2 relay). Pi 5 on current Raspberry Pi OS = gpiochip0.
+      - /dev/gpiochip0:/dev/gpiochip0
+    # The DS18B20 temperature probe needs nothing here: containers can already read /sys/bus/w1.
