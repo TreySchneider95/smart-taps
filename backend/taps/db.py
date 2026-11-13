@@ -5,12 +5,14 @@ Model:
   kegs   - one row per keg you've tapped; holds how much has been poured from it
   taps   - each physical tap points at the keg currently on it (or nothing)
   pours  - individual pours recorded by the flow meters (for future stats)
+  settings - display preferences set from the console (background theme)
 
 Flow meters write *increments* (poured_ml = poured_ml + x) so the CLI and the
 server can safely touch the same database at the same time.
 """
 from __future__ import annotations
 
+import json
 import sqlite3
 from contextlib import contextmanager
 from datetime import datetime, timezone
@@ -64,6 +66,10 @@ CREATE TABLE IF NOT EXISTS pours (
     started_at  TEXT NOT NULL,
     ended_at    TEXT NOT NULL
 );
+CREATE TABLE IF NOT EXISTS settings (
+    key         TEXT PRIMARY KEY,
+    value       TEXT NOT NULL
+);
 CREATE INDEX IF NOT EXISTS kegs_beer ON kegs(beer_id);
 """
 
@@ -105,6 +111,20 @@ class Database:
                 c.execute("ALTER TABLE beers ADD COLUMN bubbles INTEGER")
             for tid in tap_ids:
                 c.execute("INSERT OR IGNORE INTO taps (id) VALUES (?)", (tid,))
+
+    # ---------- settings (small JSON values, e.g. the display's appearance) ----------
+    def get_setting(self, key: str, default=None):
+        with self.conn() as c:
+            r = c.execute("SELECT value FROM settings WHERE key = ?", (key,)).fetchone()
+        return json.loads(r["value"]) if r else default
+
+    def set_setting(self, key: str, value) -> None:
+        with self.conn() as c:
+            c.execute(
+                "INSERT INTO settings (key, value) VALUES (?, ?) "
+                "ON CONFLICT(key) DO UPDATE SET value = excluded.value",
+                (key, json.dumps(value)),
+            )
 
     # ---------- beers ----------
     def list_beers(self, include_archived: bool = False) -> list[dict]:

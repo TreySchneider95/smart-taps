@@ -11,7 +11,7 @@
     unlocked: false,
     entry: "",
     tapId: null,
-    mode: "overview",     // overview | picker | confirm
+    mode: "overview",     // overview | picker | confirm | appearance
     filter: "recent",
     beers: [],
     chosen: null,
@@ -19,6 +19,7 @@
     fresh: true,
     kickArmed: false,
     lastDetailKey: "",
+    look: null,           // appearance being edited: { theme, warmth }
   };
 
   const consoleEl = $("#console");
@@ -83,6 +84,7 @@
     ui.pin = "";
     consoleEl.hidden = true;
     clearTimeout(idleTimer);
+    app.applyAppearance(app.state?.appearance, true); // drop any unsaved preview
   }
 
   $("#openConsole").addEventListener("click", open);
@@ -137,14 +139,15 @@
   function renderTapList(force = true) {
     const list = $("#tapList");
     if (!list || !app.state) return;
-    const key = JSON.stringify([ui.tapId, app.state.taps.map((t) => [t.beer?.id, t.beer?.name, t.beer?.logo_url, t.keg?.id, t.keg && Math.round(t.keg.remaining_pct * 100)])]);
+    const looking = ui.mode === "appearance";
+    const key = JSON.stringify([ui.tapId, looking, app.state.taps.map((t) => [t.beer?.id, t.beer?.name, t.beer?.logo_url, t.keg?.id, t.keg && Math.round(t.keg.remaining_pct * 100)])]);
     if (!force && key === tapListKey) return;
     tapListKey = key;
     list.innerHTML = app.state.taps.map((t) => {
       const b = t.beer;
       const pct = b && t.keg ? t.keg.remaining_pct : null;
       return `
-        <button class="tap-card ${t.id === ui.tapId ? "selected" : ""}" data-tap="${t.id}" ${b ? `style="--pour:${b.color_hex}"` : ""}>
+        <button class="tap-card ${t.id === ui.tapId && !looking ? "selected" : ""}" data-tap="${t.id}" ${b ? `style="--pour:${b.color_hex}"` : ""}>
           ${app.medallionHTML(b, t.id)}
           <div style="flex:1;min-width:0">
             <div class="t-name">${b ? esc(b.name) : "Empty"}</div>
@@ -152,8 +155,21 @@
             ${pct != null ? `<div class="mini-meter"><i style="width:${pct * 100}%"></i></div>` : ""}
           </div>
         </button>`;
-    }).join("");
-    list.querySelectorAll(".tap-card").forEach((c) =>
+    }).join("") + `
+      <button class="tap-card ${looking ? "selected" : ""}" id="lookCard">
+        <span class="look-dot"></span>
+        <div style="flex:1;min-width:0">
+          <div class="t-name">Appearance</div>
+          <div class="t-sub">Background color</div>
+        </div>
+      </button>`;
+    $("#lookCard", list).addEventListener("click", () => {
+      ui.mode = "appearance";
+      ui.kickArmed = false;
+      ui.look = { ...(app.state?.appearance || { theme: "olive", warmth: 0 }) };
+      render();
+    });
+    list.querySelectorAll(".tap-card[data-tap]").forEach((c) =>
       c.addEventListener("click", () => {
         ui.tapId = Number(c.dataset.tap);
         ui.mode = "overview";
@@ -165,6 +181,7 @@
 
   function renderDetail() {
     const d = $("#detail");
+    if (d && ui.mode === "appearance") return renderAppearance(d);
     const t = tap();
     if (!d || !t) return;
     ui.lastDetailKey = detailKey(t);
@@ -286,6 +303,83 @@
         } catch (e) { toast(e.message, true); }
       })
     );
+  }
+
+  // ---------- appearance ----------
+  function warmthLabel(w) {
+    return w === 0 ? "Neutral" : `${w < 0 ? "Cooler" : "Warmer"} ${Math.abs(w)}`;
+  }
+
+  function renderAppearance(d) {
+    const look = ui.look;
+    const cards = Object.entries(app.THEMES).map(([key, th]) => `
+      <button class="theme-card ${look.theme === key ? "on" : ""}" data-theme="${key}">
+        <span class="theme-swatch"></span>
+        <span class="theme-name">${esc(th.label)}</span>
+      </button>`).join("");
+    d.innerHTML = `
+      <div class="eyebrow">Display</div>
+      <h2>Appearance</h2>
+      <div class="sub">Background color for the tap board. Changes show right away.</div>
+      <div class="field-label" style="margin-top:24px">Color</div>
+      <div class="theme-cards">${cards}</div>
+      <div class="field-label" style="margin-top:26px">Warmth</div>
+      <div class="warmth">
+        <span>Cooler</span>
+        <input type="range" id="warmth" min="-5" max="5" step="1" value="${look.warmth}" aria-label="Warmth">
+        <span>Warmer</span>
+      </div>
+      <div class="warmth" style="justify-content:center;margin-top:4px"><span class="warmth-value" id="warmthValue">${warmthLabel(look.warmth)}</span></div>
+      <div style="margin-top:24px">
+        <button class="btn ghost" id="resetLook">Reset to olive, neutral</button>
+      </div>`;
+    paintSwatches(d);
+
+    d.querySelectorAll("[data-theme]").forEach((c) =>
+      c.addEventListener("click", () => {
+        if (look.theme === c.dataset.theme) return;
+        look.theme = c.dataset.theme;
+        d.querySelectorAll("[data-theme]").forEach((x) => x.classList.toggle("on", x === c));
+        app.paintAppearance(look);
+        saveLook();
+      })
+    );
+    const slider = $("#warmth", d);
+    slider.addEventListener("input", () => {   // live preview while dragging
+      look.warmth = Number(slider.value);
+      $("#warmthValue", d).textContent = warmthLabel(look.warmth);
+      paintSwatches(d);
+      app.paintAppearance(look);
+    });
+    slider.addEventListener("change", saveLook); // save when you let go
+    $("#resetLook", d).addEventListener("click", () => {
+      ui.look = { theme: "olive", warmth: 0 };
+      app.paintAppearance(ui.look);
+      saveLook();
+      renderAppearance(d);
+    });
+  }
+
+  // each card previews its theme at the current warmth
+  function paintSwatches(d) {
+    d.querySelectorAll("[data-theme]").forEach((c) => {
+      const p = app.themePalette(c.dataset.theme, ui.look.warmth);
+      const sw = $(".theme-swatch", c);
+      sw.style.setProperty("--sw", p["--slate"]);
+      sw.style.setProperty("--sw-hi", p["--board-hi"]);
+      sw.style.setProperty("--sw-deep", p["--slate-deep"]);
+    });
+  }
+
+  async function saveLook() {
+    try {
+      const r = await api("/api/settings/appearance", ui.look);
+      app.applyAppearance(r.appearance, true);
+      app.holdAppearance();
+    } catch (e) {
+      toast(e.message, true);
+      app.applyAppearance(app.state?.appearance, true);
+    }
   }
 
   // ---------- picker ----------

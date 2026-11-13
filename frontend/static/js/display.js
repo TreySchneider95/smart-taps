@@ -43,6 +43,66 @@
       : `<div class="medallion"><div class="medallion__inner">${tapId}</div></div>`;
   };
 
+  // ---------- appearance: background theme + warmth (picked in the console) ----------
+  // Each theme is [hue, saturation%] at its coolest, neutral and warmest. Warmth (-5..5)
+  // blends from neutral toward one end; every background shade is then that hue/saturation
+  // at a fixed lightness, so the board stays just as dark whatever you pick.
+  const THEMES = {
+    olive:    { label: "Olive",     cool: [100, 22], base: [74, 26],  warm: [50, 30] },
+    plum:     { label: "Deep Plum", cool: [282, 18], base: [320, 20], warm: [348, 24] },
+    charcoal: { label: "Charcoal",  cool: [212, 13], base: [40, 5],   warm: [28, 17] },
+  };
+  const SHADES = {
+    "--slate": 16, "--slate-deep": 12.5, "--panel": 19.5, "--panel-hi": 23.5,
+    "--board-hi": 21.5, "--keg-body": 8.8, "--keg-edge": 5.5,
+  };
+
+  function hslToRgb(h, s, l) {
+    s /= 100; l /= 100;
+    const a = s * Math.min(l, 1 - l);
+    const f = (n) => { const k = (n + h / 30) % 12; return l - a * Math.max(-1, Math.min(k - 3, 9 - k, 1)); };
+    return [f(0), f(8), f(4)];
+  }
+  function rgbToHueSat([r, g, b]) {
+    const max = Math.max(r, g, b), min = Math.min(r, g, b), d = max - min, l = (max + min) / 2;
+    if (!d) return [0, 0];
+    const h = max === r ? ((g - b) / d) % 6 : max === g ? (b - r) / d + 2 : (r - g) / d + 4;
+    return [(h * 60 + 360) % 360, (d / (1 - Math.abs(2 * l - 1))) * 100];
+  }
+  const toHex = (rgb) => "#" + rgb.map((v) => Math.round(v * 255).toString(16).padStart(2, "0")).join("");
+
+  app.THEMES = THEMES;
+  app.themePalette = function (theme, warmth) {
+    const t = THEMES[theme] || THEMES.olive;
+    const w = Math.max(-5, Math.min(5, Number(warmth) || 0)) / 5;
+    // blend in RGB (not hue) so e.g. charcoal goes warm-grey -> neutral -> blue-grey without passing through green
+    const from = hslToRgb(...t.base, 16);
+    const to = hslToRgb(...(w < 0 ? t.cool : t.warm), 16);
+    const [h, sat] = rgbToHueSat(from.map((v, i) => v + (to[i] - v) * Math.abs(w)));
+    return Object.fromEntries(Object.entries(SHADES).map(([k, l]) => [k, toHex(hslToRgb(h, sat, l))]));
+  };
+
+  // Paints the page. The console calls this directly to preview while you drag the slider.
+  app.paintAppearance = function (a) {
+    if (!a) return;
+    const root = document.documentElement.style;
+    for (const [k, v] of Object.entries(app.themePalette(a.theme, a.warmth))) root.setProperty(k, v);
+  };
+
+  let appearanceKey = null;
+  let holdUntil = 0; // after a save, ignore polls that were already in flight with the old value
+  app.holdAppearance = () => { holdUntil = Date.now() + 2000; };
+  function applyAppearance(a, force = false) {
+    const key = a && `${a.theme}|${a.warmth}`;
+    if (!a || (!force && (key === appearanceKey || Date.now() < holdUntil))) return; // only repaint when the saved setting changes
+    appearanceKey = key;
+    app.paintAppearance(a);
+    try { localStorage.setItem("taps.appearance", JSON.stringify(a)); } catch {}
+  }
+  app.applyAppearance = applyAppearance;
+  // paint the last-known theme straight away so a reload doesn't flash olive first
+  try { app.paintAppearance(JSON.parse(localStorage.getItem("taps.appearance"))); } catch {}
+
   // ---------- tap columns ----------
   const cols = new Map(); // tap id -> { el, key }
 
@@ -188,6 +248,7 @@
       failures = 0;
       $("#offline").hidden = true;
       app.state = state;
+      applyAppearance(state.appearance);
       renderTemp(state.temperature);
       render(state);
       app.listeners.forEach((fn) => fn(state));
@@ -204,6 +265,7 @@
       $("#barName").textContent = app.meta.bar.name;
       $("#barTag").textContent = app.meta.bar.tagline;
       document.title = app.meta.bar.name;
+      applyAppearance(app.meta.appearance);
     } catch (e) {
       return setTimeout(boot, 2000);
     }

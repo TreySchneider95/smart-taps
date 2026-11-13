@@ -3,7 +3,7 @@
 A tap list display and management system for a home kegerator, built for a
 Raspberry Pi 5 with a touch display.
 
-- **The display (what guests see).** A chalkboard with one column per tap: a brass
+- **The display (what guests see).** A chalkboard with one column per tap: a silver
   medallion (the beer's logo, or the tap number), the name, style
   and ABV, and a keg gauge filled with the beer's real color (from its SRM, or
   red/white/rosé for wine) showing % and gallons left. It bubbles while someone is
@@ -102,7 +102,7 @@ For wine, use `--kind wine --color red` (or `white`, `rose`, `orange`).
 Colors can be an SRM number (1 to 40), a word (`straw`, `gold`, `amber`,
 `copper`, `brown`, `black`), or a `#hex` value.
 
-**Logos** go in the brass medallion. Point it at an image URL, or copy a file into the
+**Logos** go in the silver medallion. Point it at an image URL, or copy a file into the
 project's `data/` folder first:
 
 ```bash

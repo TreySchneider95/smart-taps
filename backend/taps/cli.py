@@ -30,7 +30,7 @@ def _c(code: str, s: str) -> str:
 
 def bold(s): return _c("1", s)
 def dim(s): return _c("2", s)
-def brass(s): return _c("38;2;201;162;74", s)
+def silver(s): return _c("38;2;201;206;210", s)
 
 
 def swatch(hex_color: str) -> str:
@@ -132,7 +132,7 @@ def prompt_beer(existing: dict | None = None) -> dict:
 
 # ---------------- commands ----------------
 def cmd_status(db: Database, cfg, args):
-    print(brass(f"\n  {cfg.bar_name} · {cfg.bar_tagline}\n"))
+    print(silver(f"\n  {cfg.bar_name} · {cfg.bar_tagline}\n"))
     for r in db.tap_rows():
         tag = bold(f"  Tap {r['tap_id']}  ")
         if not r["beer_id"]:
@@ -167,7 +167,7 @@ def cmd_add(db: Database, cfg, args):
             "bubbles": None if args.bubbles is None else int(args.bubbles),
         }
     else:
-        print(brass("\n  New beer\n"))
+        print(silver("\n  New beer\n"))
         data = prompt_beer()
     beer_id = db.add_beer(data)
     print(f"\n  Added #{beer_id}: {beer_line(db.get_beer(beer_id))}")
@@ -197,7 +197,7 @@ def resolve_beer(db: Database, query: str) -> dict:
 
 def cmd_edit(db: Database, cfg, args):
     beer = resolve_beer(db, args.beer)
-    print(brass(f"\n  Editing #{beer['id']}\n"))
+    print(silver(f"\n  Editing #{beer['id']}\n"))
     db.update_beer(beer["id"], prompt_beer(beer))
     print(f"\n  Saved: {beer_line(db.get_beer(beer['id']))}")
 
@@ -242,7 +242,7 @@ def cmd_level(db: Database, cfg, args):
 
 def cmd_kegs(db, cfg, args):
     for k, (label, ml) in KEG_SIZES.items():
-        star = brass(" (default)") if k == cfg.default_keg else ""
+        star = silver(" (default)") if k == cfg.default_keg else ""
         print(f"  {k:<8} {label:<26} {ml / 1000:.1f} L  ≈ {ml / 473.176:.0f} pints{star}")
 
 
@@ -328,7 +328,7 @@ MAX_LOGO_BYTES = 5 * 1024 * 1024
 
 
 def cmd_logo(db: Database, cfg, args):
-    """Attach a logo image (file or URL) to a beer; it shows in the brass medallion."""
+    """Attach a logo image (file or URL) to a beer; it shows in the silver medallion."""
     import secrets
     import urllib.request
     from pathlib import Path

@@ -7,11 +7,12 @@ import time
 import uuid
 from contextlib import asynccontextmanager
 from pathlib import Path
+from typing import Literal
 
 from fastapi import Depends, FastAPI, Header, HTTPException
 from fastapi.responses import FileResponse
 from fastapi.staticfiles import StaticFiles
-from pydantic import BaseModel
+from pydantic import BaseModel, Field
 
 from . import config as config_mod
 from .colors import color_label, display_color, has_bubbles
@@ -45,6 +46,15 @@ class LevelBody(BaseModel):
 
 class BubblesBody(BaseModel):
     on: bool
+
+
+THEMES = ("olive", "plum", "charcoal")
+DEFAULT_APPEARANCE = {"theme": "olive", "warmth": 0}
+
+
+class AppearanceBody(BaseModel):
+    theme: Literal["olive", "plum", "charcoal"]
+    warmth: int = Field(0, ge=-5, le=5)   # -5 coolest .. +5 warmest
 
 
 def logo_url(name: str | None) -> str | None:
@@ -108,6 +118,15 @@ def create_app(cfg: config_mod.Config | None = None) -> FastAPI:
             "error": t.error,
         }
 
+    def appearance() -> dict:
+        a = db.get_setting("appearance") or {}
+        theme = a.get("theme") if a.get("theme") in THEMES else DEFAULT_APPEARANCE["theme"]
+        try:
+            warmth = max(-5, min(5, int(a.get("warmth", 0))))
+        except (TypeError, ValueError):
+            warmth = 0
+        return {"theme": theme, "warmth": warmth}
+
     def tap_state() -> list[dict]:
         rows = {r["tap_id"]: r for r in db.tap_rows()}
         out = []
@@ -164,11 +183,12 @@ def create_app(cfg: config_mod.Config | None = None) -> FastAPI:
             "default_keg": cfg.default_keg,
             "ssh_target": cfg.ssh_target,
             "mock": cfg.mock,
+            "appearance": appearance(),
         }
 
     @app.get("/api/state")
     def state():
-        return {"boot_id": boot_id, "temperature": temperature_state(), "taps": tap_state()}
+        return {"boot_id": boot_id, "temperature": temperature_state(), "taps": tap_state(), "appearance": appearance()}
 
     @app.get("/api/flow")
     def flow():
@@ -227,6 +247,11 @@ def create_app(cfg: config_mod.Config | None = None) -> FastAPI:
             raise HTTPException(404, "No such beer")
         db.update_beer(beer_id, {"bubbles": int(body.on)})
         return {"ok": True}
+
+    @app.post("/api/settings/appearance", dependencies=[Depends(require_pin)])
+    def set_appearance(body: AppearanceBody):
+        db.set_setting("appearance", body.model_dump())
+        return {"ok": True, "appearance": appearance()}
 
     # Not PIN-protected: the Charge CO2 button lives on the main screen for whoever is pouring wine.
     # Safety comes from the relay itself (fixed pulse, hard cap, cooldown).
