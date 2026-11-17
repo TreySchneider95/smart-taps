@@ -319,7 +319,6 @@
 
   // ---------- appearance (its own screen, from the header button) ----------
   const DEFAULT_LOOK = { theme: "olive", warmth: 0, scene: "auto", surprises: "lively" };
-  const SEASONS = ["spring", "summer", "fall", "winter"];
   const ICONS = {
     off: `<circle cx="16" cy="16" r="10" fill="none" stroke="currentColor" stroke-width="2"/><path d="M9 23L23 9" stroke="currentColor" stroke-width="2"/>`,
     auto: `<rect x="5" y="8" width="22" height="19" rx="3" fill="none" stroke="currentColor" stroke-width="2"/><path d="M5 14H27M11 5v5M21 5v5" stroke="currentColor" stroke-width="2" stroke-linecap="round"/><circle cx="16" cy="20.5" r="2.6" fill="currentColor"/>`,
@@ -343,10 +342,12 @@
         <span class="theme-name">${esc(th.label)}</span>
       </button>`).join("");
     const now = app.scenery?.seasonOf() || "fall";
-    const sceneCards = ["off", "auto", ...SEASONS].map((key) => `
+    // None, Auto, then every scene scenery.js knows about (seasons first, then themes)
+    const scenes = [{ key: "off", label: "None" }, { key: "auto", label: "Auto" }, ...(app.scenery?.catalog || [])];
+    const sceneCards = scenes.map(({ key, label, icon }) => `
       <button class="scene-card ${look.scene === key ? "on" : ""}" data-scene="${key}">
-        <svg viewBox="0 0 32 32" aria-hidden="true">${ICONS[key]}</svg>
-        <span class="name">${key === "off" ? "None" : cap(key)}</span>
+        <svg viewBox="0 0 32 32" aria-hidden="true">${icon || ICONS[key] || ""}</svg>
+        <span class="name">${esc(label)}</span>
         ${key === "auto" ? `<span class="hint">Now: ${cap(now)}</span>` : ""}
       </button>`).join("");
     const chips = Object.keys(SURPRISE_HINTS)

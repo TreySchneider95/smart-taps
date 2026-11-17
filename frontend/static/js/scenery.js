@@ -1,5 +1,7 @@
-/* Seasonal scenery behind the tap board: a small ambient scene per season (grass, snow,
-   falling leaves…) plus surprises (birds, a ghost, Santa…) that wander through now and then.
+/* Scenery behind the tap board: a small ambient scene per season (grass, snow, falling
+   leaves…) or theme (Husker game day), plus surprises that wander through now and then.
+   To add a scene: an AMBIENT entry, a SURPRISES entry, a CATALOG row, and its key in
+   SCENES in backend/taps/server.py.
 
    Everything lives in #scenery, underneath the taps, so it can never cover a name or a keg.
    Only transform and opacity are animated, which the Pi's GPU handles without breaking a
@@ -428,6 +430,187 @@
     return svgH("0 0 200 100", 24, `<g opacity=".5">${arcs}</g>`);
   }
 
+  // ================================================================ game day (Husker football)
+  // Team colors only — no logos. Scarlet & cream at home, black & gold for the visitors.
+  const RED = "#D00000", CREAM = "#F5F1E6", GOLD = "#FFCD00";
+
+  // a running player, facing right. Limbs swing via .gd-limb (origins in viewBox units).
+  function player({ helmet, stripe, jersey, num, numC, pants, sock, rim = "none", ball = false }) {
+    const leg = (hx, kx, ky, ax, ay, cls) =>
+      `<g class="gd-limb ${cls}" style="transform-origin:${hx}px 40px"><path d="M${hx} 40L${kx} ${ky}L${ax} ${ay}" stroke="${pants}" stroke-width="5" fill="none" stroke-linecap="round" stroke-linejoin="round"/>` +
+      `<path d="M${kx + (ax - kx) * 0.5} ${ky + (ay - ky) * 0.5}L${ax} ${ay}" stroke="${sock}" stroke-width="4.4" stroke-linecap="round"/><path d="M${ax - 2} ${ay + 2.4}h6.5" stroke="#151515" stroke-width="3" stroke-linecap="round"/></g>`;
+    const backArm = `<g class="gd-limb a" style="transform-origin:20px 22px"><path d="M20 22L13 30" stroke="${jersey}" stroke-width="4.5" stroke-linecap="round"/></g>`;
+    const frontArm = ball
+      ? `<path d="M28 22L33 28L29 31" stroke="${jersey}" stroke-width="4.5" fill="none" stroke-linecap="round" stroke-linejoin="round"/>` +
+        `<ellipse cx="31" cy="28.5" rx="4.6" ry="2.8" fill="#7A4A25" transform="rotate(-20 31 28.5)"/><path d="M29.6 27.9L32.6 26.9" stroke="#fff" stroke-width=".7"/>`
+      : `<g class="gd-limb b" style="transform-origin:28px 22px"><path d="M28 22L35 29" stroke="${jersey}" stroke-width="4.5" stroke-linecap="round"/></g>`;
+    return `${leg(20, 15, 50, 17, 58, "b")}${backArm}` +
+      `<path d="M15 20Q22 15 31 19L30 34Q23 37 18 36Z" fill="${jersey}" stroke="${rim}" stroke-width=".8"/>` +
+      `<text x="23.5" y="31" text-anchor="middle" font-family="Barlow Condensed, sans-serif" font-weight="800" font-size="9" fill="${numC}">${num}</text>` +
+      `<path d="M18 35L30 33L31 41L18 42Z" fill="${pants}"/>${leg(23, 29, 48, 27, 57, "a")}` +
+      `<rect x="24" y="16" width="4" height="4" fill="#C98E6A"/><circle cx="27" cy="11" r="7.5" fill="${helmet}" stroke="${rim}" stroke-width=".8"/>` +
+      `<path d="M21 6.5Q27 2.5 33 7.5" stroke="${stripe}" stroke-width="2" fill="none"/>` +
+      `<path d="M32 11.5H36.5M32 14.5H36M35 9.5V17" stroke="#9AA0A6" stroke-width="1.2" fill="none"/>${frontArm}`;
+  }
+  const husker = (ball = false) => svgH("0 0 44 64", 12, player({ helmet: CREAM, stripe: RED, jersey: RED, num: pick(["2", "7", "12", "21", "33", "88"]), numC: CREAM, pants: CREAM, sock: RED, ball }));
+  const visitor = (ball = false) => svgH("0 0 44 64", 12, player({ helmet: "#151515", stripe: GOLD, jersey: "#151515", num: pick(["4", "9", "15", "44"]), numC: GOLD, pants: GOLD, sock: "#151515", rim: "rgba(255,205,0,.7)", ball }));
+  const FOOTBALL = `<ellipse cx="10" cy="6" rx="9" ry="5.4" fill="#7A4A25"/><path d="M5 6H15M7.5 4.6V7.4M10 4.6V7.4M12.5 4.6V7.4" stroke="#fff" stroke-width=".9" fill="none"/>` +
+    `<path d="M2.4 3.6Q4 6 2.4 8.4M17.6 3.6Q16 6 17.6 8.4" stroke="#fff" stroke-width=".8" fill="none"/>`;
+
+  // an original mascot: a cheering ear of corn with pom-poms (not the university's character)
+  function cornMascot() {
+    let kernels = "";
+    for (let y = 22; y <= 56; y += 4.4) for (let x = 16.5; x <= 33.5; x += 4.3) {
+      if ((y < 25 || y > 52) && (x < 18 || x > 32)) continue;
+      kernels += `<circle cx="${f1(x)}" cy="${f1(y)}" r="1.5" fill="rgba(190,130,0,.35)"/>`;
+    }
+    const pom = (x, y) => `<g fill="${RED}"><circle cx="${x}" cy="${y}" r="4"/><circle cx="${x - 2.6}" cy="${y - 2.4}" r="2.6"/><circle cx="${x + 2.6}" cy="${y - 2}" r="2.6"/></g><circle cx="${x + 0.6}" cy="${y + 1.4}" r="1.8" fill="${CREAM}"/>`;
+    return svgH("0 0 50 80", 13,
+      `<g class="gd-limb b" style="transform-origin:20px 58px"><path d="M20 58L19 72" stroke="#E8C547" stroke-width="4" stroke-linecap="round"/><ellipse cx="18.5" cy="74" rx="5" ry="2.6" fill="${RED}"/></g>` +
+      `<g class="gd-limb a" style="transform-origin:30px 58px"><path d="M30 58L31 72" stroke="#E8C547" stroke-width="4" stroke-linecap="round"/><ellipse cx="32" cy="74" rx="5" ry="2.6" fill="${RED}"/></g>` +
+      `<path d="M22 15Q20 5 25 1Q24 8 26.5 15ZM28 15Q32 6 37 7Q31 10 30.5 16Z" fill="#7DB356"/>` +
+      `<rect x="12" y="13" width="26" height="47" rx="13" fill="#F4C430"/>${kernels}` +
+      `<path d="M13 20Q25 15 37 20L37 24Q25 19 13 24Z" fill="${RED}"/>` +
+      `<ellipse cx="20.5" cy="29" rx="3.1" ry="3.7" fill="#fff"/><ellipse cx="29.5" cy="29" rx="3.1" ry="3.7" fill="#fff"/>` +
+      `<circle cx="21.3" cy="29.8" r="1.7" fill="#222"/><circle cx="30.3" cy="29.8" r="1.7" fill="#222"/>` +
+      `<path d="M19 36Q25 43 31 36Z" fill="#7A2318"/><ellipse cx="16" cy="35" rx="2.2" ry="1.3" fill="#F2A07A" opacity=".7"/><ellipse cx="34" cy="35" rx="2.2" ry="1.3" fill="#F2A07A" opacity=".7"/>` +
+      `<path d="M12 44Q4 54 10 66Q14 58 18 52ZM38 44Q46 54 40 66Q36 58 32 52Z" fill="#6AA046"/><path d="M18 50Q25 70 32 50Q25 58 18 50Z" fill="#5E9440"/>` +
+      `<g class="gd-pom" style="transform-origin:13px 38px"><path d="M13 38L5 30" stroke="#6AA046" stroke-width="3.4" stroke-linecap="round"/>${pom(4, 27)}</g>` +
+      `<g class="gd-pom r" style="transform-origin:37px 38px"><path d="M37 38L45 30" stroke="#6AA046" stroke-width="3.4" stroke-linecap="round"/>${pom(46, 27)}</g>`);
+  }
+
+  // scoreboard in the header: lives for the day (resets at midnight)
+  const GD_KEY = "taps.gameday";
+  function gdScore() {
+    const day = new Date().toDateString();
+    try { const s = JSON.parse(localStorage.getItem(GD_KEY)); if (s && s.day === day) return s; } catch {}
+    return { day, home: 0, away: 0, tds: 0 };
+  }
+  function gdSave(s) { try { localStorage.setItem(GD_KEY, JSON.stringify(s)); } catch {} }
+  function gdRoar() {
+    layer.classList.add("gd-roar");
+    clearTimeout(gdRoar.t);
+    gdRoar.t = setTimeout(() => layer.classList.remove("gd-roar"), 4500);
+  }
+  function gdFlash(msg, points = 0) {
+    const board = layer.querySelector(".gd-board");
+    if (!board) return;
+    const s = gdScore();
+    s.home += points;
+    gdSave(s);
+    board.querySelector(".gd-home").textContent = s.home;
+    board.querySelector(".gd-msg").textContent = msg;
+    board.classList.add("flash");
+    gdRoar();
+    clearTimeout(gdFlash.t);
+    gdFlash.t = setTimeout(() => { board.classList.remove("flash"); board.querySelector(".gd-msg").textContent = "GAME DAY"; }, 3800);
+  }
+
+  function gdStands() {
+    // rows of fans as dot patterns (cheap: one element per quarter-row), mostly scarlet with some cream
+    let rows = "";
+    for (let r = 0; r < 11; r++) {
+      let segs = "";
+      for (let q = 0; q < 4; q++) {
+        const b = pick(["#B00000", "#8E0000", RED, "#A31515", "#C22626"]); // a sea of red
+        segs += `<i class="gd-seg" style="--b:${b};--cd:${f1(rand(0.5, 1.1))}s;--cdl:${f1(-rand(0, 1))}s;background-position:${f1(rand(0, 1.3))}vh 0,${f1(rand(0, 1.3))}vh .55vh"></i>`;
+      }
+      rows += `<div class="gd-row">${segs}</div>`;
+    }
+    return `<div class="gd-stands"><div class="gd-rim"></div>${rows}</div>`;
+  }
+
+  function gdField() {
+    let lines = "", nums = "";
+    for (let i = 0; i <= 10; i++) {
+      const x = 7 + i * 8.6;
+      lines += `<i class="gd-line" style="left:${f1(x)}vw"></i>`;
+      if (i > 0 && i < 10) nums += `<span class="gd-num" style="left:${f1(x)}vw">${(i <= 5 ? i : 10 - i) * 10}</span>`;
+    }
+    return `<div class="gd-field">${lines}${nums}<div class="gd-endzone l"><span>NEBRASKA</span></div><div class="gd-endzone r"><span>NEBRASKA</span></div></div>` +
+      `<div class="gd-goal">${svgH("0 0 40 100", 20, `<path d="M6 0V55H34V0M20 55V100" stroke="${GOLD}" stroke-width="3" fill="none"/>`)}</div>`;
+  }
+
+  AMBIENT.gameday = () => {
+    const s = gdScore();
+    return gdStands() + gdField() +
+      `<div class="gd-board"><div class="gd-team"><span>HUSKERS</span><b class="gd-home">${s.home}</b></div>` +
+      `<div class="gd-msg">GAME DAY</div><div class="gd-team"><span>VISITORS</span><b>${s.away}</b></div></div>`;
+  };
+
+  function balloons(n = 28) {
+    let s = "";
+    for (let i = 0; i < n; i++) {
+      const d = rand(9, 14);
+      s += `<div class="gd-balloon" style="left:${f1(rand(-2, 98))}vw;--dur:${f1(d)}s;animation-delay:${f1(rand(0, 3))}s;--dx:${f1(rand(-8, 8))}vw">` +
+        sway(svgH("0 0 20 44", rand(5, 7.5),
+          `<ellipse cx="10" cy="11" rx="8.5" ry="10.5" fill="${pick([RED, "#E01A2F", "#C40018"])}"/><ellipse cx="7" cy="6.5" rx="2" ry="3.6" fill="#fff" opacity=".35"/>` +
+          `<path d="M8.6 21.6L10 23.6L11.4 21.6Z" fill="#B00000"/><path d="M10 23.6Q7 30 11 35T9 44" stroke="rgba(235,235,235,.6)" stroke-width=".7" fill="none"/>`),
+        "position:relative", { amp: 6, dur: rand(2.5, 4) }) + `</div>`;
+    }
+    spawn(s, "sc-burst", "", 18);
+  }
+
+  function fireworks() {
+    const bursts = irand(3, 5);
+    for (let k = 0; k < bursts; k++) {
+      setTimeout(() => {
+        const color = pick([RED, CREAM, "#FFFFFF", "#FF3B3B"]);
+        let sparks = "";
+        for (let i = 0; i < 24; i++) {
+          const a = (i / 24) * Math.PI * 2, r = rand(10, 15);
+          sparks += `<i class="gd-spark" style="--c:${i % 4 === 0 ? CREAM : color};--dx:${f1(Math.cos(a) * r)}vh;--dy:${f1(Math.sin(a) * r)}vh"></i>`;
+        }
+        spawn(`<b class="gd-rocket"></b>${sparks}`, "gd-firework", `left:${f1(rand(12, 88))}vw;top:${f1(rand(10, 34))}vh`, 3.2);
+      }, k * rand(500, 900));
+    }
+  }
+
+  SURPRISES.gameday = {
+    touchdown: { w: 2, run: () => {
+      const d = rand(6.5, 8);
+      cross(husker(true), { bottom: 2, dur: d, rtl: false, bob: "gd-stride" });
+      setTimeout(() => {
+        const s = gdScore();
+        gdFlash("TOUCHDOWN!", 7);
+        // tradition: red balloons go up after the first touchdown
+        if (!s.tds) { const n = gdScore(); n.tds = 1; gdSave(n); setTimeout(() => balloons(), 1200); }
+      }, d * 930);
+    } },
+    fieldgoal: { w: 1.6, run: () => {
+      spawn(`<div class="gd-arc"><div class="sc-spin" style="--sp:.5s">${svgH("0 0 20 12", 3.4, FOOTBALL)}</div></div>`, "gd-kick", "bottom:8vh;left:0;--dur:3s", 3);
+      setTimeout(() => gdFlash("IT'S GOOD!", 3), 2700);
+    } },
+    tackle: { w: 1.6, run: () => {
+      spawn(`<div class="gd-t-husker">${husker()}</div><div class="gd-t-visitor"><div class="gd-flipx">${visitor(true)}</div></div>` +
+        `<div class="gd-pow">${svgH("0 0 40 40", 9, `<path d="M20 2L24 14L37 9L28 20L38 30L25 27L20 39L16 27L3 31L12 20L4 9L16 14Z" fill="${GOLD}"/><path d="M20 9L22.5 16L30 14L25 20L31 26L23.5 24L20 31L17.5 24L10 26L15 20L10 14L17.5 16Z" fill="#fff"/>`)}</div>`,
+        "gd-tackle", "bottom:2vh;--dur:7s", 7);
+      setTimeout(() => gdFlash("BIG HIT!"), 3500);
+    } },
+    mascot: { w: 1.5, run: () => {
+      const rtl = Math.random() < 0.5;
+      spawn(`<div class="sc-flip"><div class="gd-moves"><div class="sc-waddle" style="--wd:.42s">${cornMascot()}</div></div></div>`,
+        `gd-mascot${rtl ? " rtl" : ""}`, "bottom:2vh;--dur:12s", 12);
+    } },
+    wave: { w: 1.4, run: () => {
+      const pass = () => spawn(`<div class="gd-wave"></div>`, "sc-cross gd-wave-run", "bottom:7.5vh;--dur:4.2s", 4.2);
+      pass(); setTimeout(pass, 4600);
+      setTimeout(() => gdFlash("DO THE WAVE!"), 300);
+    } },
+    fireworks: { w: 1.2, run: fireworks },
+    balloons: { w: 1, run: () => balloons() },
+  };
+
+  // scene list for the console (seasons rotate under "auto"; the rest are themes)
+  const FOOTBALL_ICON = `<ellipse cx="16" cy="16" rx="13" ry="8" fill="#9A5B2E" transform="rotate(-30 16 16)"/><path d="M11 19L21 13M13 15.4l1.6 2.6M15.6 13.8l1.6 2.6M18.2 12.2l1.6 2.6" stroke="#fff" stroke-width="1.4" stroke-linecap="round"/>`;
+  const CATALOG = [
+    { key: "spring", label: "Spring", seasonal: true },
+    { key: "summer", label: "Summer", seasonal: true },
+    { key: "fall", label: "Fall", seasonal: true },
+    { key: "winter", label: "Winter", seasonal: true },
+    { key: "gameday", label: "Game Day", icon: FOOTBALL_ICON },
+  ];
+
   // ================================================================ engine
   const S = { season: null, gap: GAPS.lively, timer: 0, last: null };
 
@@ -491,7 +674,7 @@
   // "auto" follows the calendar; check now and then so it flips on the first of the month
   setInterval(() => { if (current.startsWith("auto|") && seasonOf() !== S.season) { current = ""; set(app.state?.appearance); } }, 3600 * 1000);
 
-  app.scenery = { set, play, seasonOf, surprises: (season) => Object.keys(SURPRISES[season] || {}) };
+  app.scenery = { set, play, seasonOf, catalog: CATALOG, surprises: (scene) => Object.keys(SURPRISES[scene] || {}) };
 
   // start from the last-known setting so a reload shows the scene straight away
   try { set(JSON.parse(localStorage.getItem("taps.appearance"))); } catch { set(null); }

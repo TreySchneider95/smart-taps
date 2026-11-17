@@ -12,7 +12,7 @@ from typing import Literal
 from fastapi import Depends, FastAPI, Header, HTTPException
 from fastapi.responses import FileResponse
 from fastapi.staticfiles import StaticFiles
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, field_validator
 
 from . import config as config_mod
 from .colors import color_label, display_color, has_bubbles
@@ -49,7 +49,8 @@ class BubblesBody(BaseModel):
 
 
 THEMES = ("olive", "plum", "charcoal")
-SCENES = ("off", "auto", "spring", "summer", "fall", "winter")
+# Scenes are drawn by frontend/static/js/scenery.js; add new ones here too.
+SCENES = ("off", "auto", "spring", "summer", "fall", "winter", "gameday")
 SURPRISES = ("calm", "lively", "party")
 DEFAULT_APPEARANCE = {"theme": "olive", "warmth": 0, "scene": "auto", "surprises": "lively"}
 
@@ -57,8 +58,15 @@ DEFAULT_APPEARANCE = {"theme": "olive", "warmth": 0, "scene": "auto", "surprises
 class AppearanceBody(BaseModel):
     theme: Literal["olive", "plum", "charcoal"]                       # background color
     warmth: int = Field(0, ge=-5, le=5)                               # -5 coolest .. +5 warmest
-    scene: Literal["off", "auto", "spring", "summer", "fall", "winter"] = "auto"  # auto = by the date
+    scene: str = "auto"                                               # one of SCENES; auto = season by the date
     surprises: Literal["calm", "lively", "party"] = "lively"          # how often critters show up
+
+    @field_validator("scene")
+    @classmethod
+    def known_scene(cls, v: str) -> str:
+        if v not in SCENES:
+            raise ValueError(f"unknown scene {v!r}")
+        return v
 
 
 def logo_url(name: str | None) -> str | None:

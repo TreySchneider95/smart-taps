@@ -156,6 +156,147 @@ body.console-open #scenery { display: none; }   /* nothing to see under the cons
 .sc-gust { position: absolute; left: 0; will-change: transform; animation: sc-cross var(--dur) ease-in both; }
 .sc-spin { animation: sc-turn var(--sp) linear infinite; }
 
+/* ============ Game day (Husker football) ============ */
+/* stands: rows of fans as dot patterns, behind the field */
+.gd-stands {
+  position: absolute; left: 0; right: 0; bottom: 7.5vh; height: 26vh; opacity: .42;
+  display: flex; flex-direction: column; justify-content: flex-end;
+  background: linear-gradient(to top, rgba(40, 40, 40, .7), rgba(60, 60, 60, .3));
+  -webkit-mask-image: linear-gradient(to top, #000 62%, transparent); mask-image: linear-gradient(to top, #000 62%, transparent);
+}
+.gd-rim { height: .5vh; margin-bottom: auto; background: rgba(210, 210, 210, .25); }
+.gd-row { display: flex; height: 2.1vh; border-bottom: 1px solid rgba(255, 255, 255, .05); }
+.gd-seg {
+  flex: 1;
+  background-image: radial-gradient(circle, var(--b) .3vh, transparent .38vh), radial-gradient(circle, #9E0000 .3vh, transparent .38vh);
+  background-size: 1.3vh 1.1vh;
+  animation: gd-cheer var(--cd) ease-in-out var(--cdl) infinite alternate;
+}
+@keyframes gd-cheer { to { transform: translateY(var(--ch, -.28vh)); } }
+#scenery.gd-roar { --ch: -.9vh; }   /* crowd jumps after a score */
+
+/* field */
+.gd-field {
+  position: absolute; left: 0; right: 0; bottom: 0; height: 7.5vh;
+  background: repeating-linear-gradient(90deg, #3F7F35 0 4.3vw, #468A3B 4.3vw 8.6vw) 7vw 0;
+  box-shadow: inset 0 .6vh 1vh rgba(0, 0, 0, .3);
+}
+.gd-line { position: absolute; top: 0; bottom: 0; width: 2px; margin-left: -1px; background: rgba(255, 255, 255, .7); }
+.gd-num { position: absolute; bottom: .6vh; transform: translateX(-50%); font: 700 2.2vh/1 var(--cond); letter-spacing: .5vh; color: rgba(255, 255, 255, .78); }
+.gd-endzone { position: absolute; top: 0; bottom: 0; width: 7vw; display: flex; align-items: center; justify-content: center; background: #B80000; }
+.gd-endzone.l { left: 0; }
+.gd-endzone.r { right: 0; }
+.gd-endzone span { font: 800 1.7vh/1 var(--cond); letter-spacing: .25vh; color: #F5F1E6; }
+.gd-goal { position: absolute; right: 1.5vw; bottom: 5vh; }
+
+/* scoreboard, centered in the header */
+.gd-board {
+  position: absolute; top: 1.3vh; left: 50%; transform: translateX(-50%);
+  display: flex; align-items: center; gap: 1.4vh; padding: .6vh 1.4vh;
+  background: #141414; border: 2px solid #3A3A3A; border-radius: .8vh; box-shadow: 0 .4vh 1.2vh rgba(0, 0, 0, .5);
+}
+.gd-team { display: flex; flex-direction: column; align-items: center; gap: .3vh; }
+.gd-team span { font: 700 1.3vh/1 var(--cond); letter-spacing: .2vh; color: #BBB; }
+.gd-team b { min-width: 2ch; text-align: center; font: 800 3.4vh/1 var(--cond); font-variant-numeric: tabular-nums; color: #FFB020; text-shadow: 0 0 .8vh rgba(255, 176, 32, .6); }
+.gd-msg { min-width: 14vh; padding: .7vh 1vh; border-radius: .4vh; text-align: center; font: 800 1.9vh/1 var(--cond); letter-spacing: .25vh; color: #EEE; }
+.gd-board.flash .gd-msg { color: #fff; background: #C00000; animation: gd-blink .4s steps(1) 6; }
+@keyframes gd-blink { 50% { background: transparent; } }
+
+/* players & mascot */
+.gd-limb { animation: gd-run .36s ease-in-out infinite alternate; }
+.gd-limb.b { animation-direction: alternate-reverse; }
+@keyframes gd-run { from { transform: rotate(-30deg); } to { transform: rotate(30deg); } }
+.gd-stride { animation: sc-bob .18s ease-in-out infinite alternate; --amp: .5vh; }
+.gd-pom { animation: gd-shake .3s ease-in-out infinite alternate; }
+.gd-pom.r { animation-direction: alternate-reverse; }
+@keyframes gd-shake { from { transform: rotate(-18deg); } to { transform: rotate(18deg); } }
+.gd-flipx { transform: scaleX(-1); }
+
+.gd-mascot { animation: gd-mascot var(--dur) ease-in-out both; }
+.gd-mascot.rtl { animation-direction: reverse; }
+.gd-mascot.rtl > .sc-flip { transform: scaleX(-1); }
+@keyframes gd-mascot { 0% { transform: translateX(-100%); } 38%, 62% { transform: translateX(42vw); } 100% { transform: translateX(100vw); } }
+.gd-moves { transform-origin: 50% 55%; animation: gd-moves var(--dur) linear both; }
+@keyframes gd-moves {   /* a cartwheel and a couple of jumps mid-field */
+  0%, 40% { transform: translateY(0) rotate(0); }
+  46% { transform: translateY(-9vh) rotate(180deg); }
+  52% { transform: translateY(0) rotate(360deg); }
+  55% { transform: translateY(-4vh) rotate(360deg); }
+  58%, 100% { transform: translateY(0) rotate(360deg); }
+}
+
+.gd-tackle { left: 0; right: 0; height: 13vh; }
+.gd-t-husker, .gd-t-visitor, .gd-pow { position: absolute; bottom: 0; left: 0; transform-origin: 50% 100%; }
+.gd-t-husker { animation: gd-t-h var(--dur) linear both; }
+.gd-t-visitor { animation: gd-t-v var(--dur) linear both; }
+.gd-pow { left: 46vw; bottom: 4vh; transform-origin: 50% 50%; animation: gd-pow var(--dur) ease-out both; }
+@keyframes gd-t-h {
+  0% { transform: translate(-14vw, 0) rotate(0); }
+  44% { transform: translate(40vw, 0) rotate(0); }
+  50%, 60% { transform: translate(45vw, 1vh) rotate(35deg); }
+  66%, 78% { transform: translate(46vw, 0) rotate(0); }
+  72% { transform: translate(46vw, -5vh) rotate(0); }
+  100% { transform: translate(112vw, 0) rotate(0); }
+}
+@keyframes gd-t-v {
+  0% { transform: translate(104vw, 0) rotate(0); opacity: 1; }
+  44% { transform: translate(55vw, 0) rotate(0); }
+  50% { transform: translate(51vw, 0) rotate(0); }
+  56%, 84% { transform: translate(53vw, 2vh) rotate(85deg); opacity: 1; }
+  94%, 100% { transform: translate(53vw, 2vh) rotate(85deg); opacity: 0; }
+}
+@keyframes gd-pow {
+  0%, 47% { opacity: 0; transform: scale(.3); }
+  51% { opacity: 1; transform: scale(1.15) rotate(10deg); }
+  58% { opacity: 1; transform: scale(1); }
+  64%, 100% { opacity: 0; transform: scale(.8); }
+}
+
+/* field goal: straight-line flight across, arc up and down inside */
+.gd-kick { animation: gd-kick-x var(--dur) linear both; }
+@keyframes gd-kick-x { from { transform: translateX(30vw); } to { transform: translateX(106vw); } }
+.gd-arc { animation: gd-kick-y var(--dur) linear both; }
+@keyframes gd-kick-y {
+  0% { transform: translateY(0); animation-timing-function: ease-out; }
+  50% { transform: translateY(-34vh); animation-timing-function: ease-in; }
+  87% { transform: translateY(-13vh); }
+  100% { transform: translateY(-6vh); }
+}
+
+/* the wave: a raised, brighter patch of crowd sweeping across the stands */
+.gd-wave {
+  width: 16vw; height: 26vh; opacity: .55; transform: translateY(-1.2vh);
+  background-image: radial-gradient(circle, #F5F1E6 .34vh, transparent .42vh), radial-gradient(circle, #FF3030 .34vh, transparent .42vh);
+  background-size: 1.3vh 1.1vh; background-position: 0 0, .65vh .55vh;
+  /* soft on both sides and fading out at the top, like the stands */
+  -webkit-mask-image: linear-gradient(90deg, transparent, #000 35%, #000 65%, transparent), linear-gradient(to top, #000 55%, transparent);
+  -webkit-mask-composite: source-in;
+  mask-image: linear-gradient(90deg, transparent, #000 35%, #000 65%, transparent), linear-gradient(to top, #000 55%, transparent);
+  mask-composite: intersect;
+}
+
+/* fireworks */
+.gd-firework { width: 0; height: 0; }
+.gd-rocket {
+  position: absolute; left: -.25vh; top: 0; width: .5vh; height: 2.4vh; border-radius: .3vh;
+  background: linear-gradient(to bottom, #fff, rgba(255, 200, 150, 0)); animation: gd-rocket .9s ease-out both;
+}
+@keyframes gd-rocket { from { transform: translateY(70vh); opacity: 1; } 90% { opacity: 1; } to { transform: translateY(0); opacity: 0; } }
+.gd-spark {
+  position: absolute; left: -.5vh; top: -.5vh; width: 1vh; height: 1vh; border-radius: 50%;
+  background: var(--c); box-shadow: 0 0 1.2vh .3vh var(--c);
+  animation: gd-spark 1.7s cubic-bezier(.15, .75, .3, 1) .85s both;
+}
+@keyframes gd-spark {
+  0% { transform: translate(0, 0) scale(1.2); opacity: 1; }
+  70% { opacity: .9; }
+  100% { transform: translate(var(--dx), calc(var(--dy) + 4vh)) scale(.4); opacity: 0; }
+}
+
+/* red balloons */
+.gd-balloon { position: absolute; bottom: -10vh; will-change: transform; animation: gd-up var(--dur) ease-in both; }
+@keyframes gd-up { from { transform: translate(0, 0); } to { transform: translate(var(--dx), -125vh); } }
+
 @media (prefers-reduced-motion: reduce) {
   #scenery *, #scenery *::before { animation: none !important; }
   .sc-fall, .sc-actors { display: none; }
