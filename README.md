@@ -134,6 +134,7 @@ Gear icon, then **Appearance**:
   | Fall | scarecrow, pumpkins and a jack-o'-lantern, falling leaves, harvest moon | ghost (more in October, sometimes says BOO), bats, black cat, squirrel, gust of leaves |
   | Winter | snowfall, snowman (who waves now and then), pines, string lights | Santa's sleigh (mostly in December), shooting stars, sliding penguin, northern lights, flurries |
   | Game Day | the red zone, from the 40 to the end zone and goal posts, with stands full of red | touchdown run (red balloons after the first one each day), field goal, a big hit on a black-and-gold visitor, a corn mascot doing cartwheels, the wave, red and white fireworks, red balloons |
+  | Volleyball | a court with the net between the middle taps, a crowd of red, title banners (1995, 2000, 2006, 2015, 2017), a big red N drifting in the background | G·B·R signs going up one at a time, a kill that knocks a visitor flat, a rally over the net, red-and-white confetti, lights down with phone flashlights, the wave, the corn mascot |
 
 - **Surprises:** Calm (every few minutes), Lively (about once a minute) or Party (all the time).
   **Show me a surprise** closes the console and plays one right away.

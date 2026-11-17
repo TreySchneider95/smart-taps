@@ -50,7 +50,7 @@ class BubblesBody(BaseModel):
 
 THEMES = ("olive", "plum", "charcoal")
 # Scenes are drawn by frontend/static/js/scenery.js; add new ones here too.
-SCENES = ("off", "auto", "spring", "summer", "fall", "winter", "gameday")
+SCENES = ("off", "auto", "spring", "summer", "fall", "winter", "gameday", "volleyball")
 SURPRISES = ("calm", "lively", "party")
 DEFAULT_APPEARANCE = {"theme": "olive", "warmth": 0, "scene": "auto", "surprises": "lively"}
 

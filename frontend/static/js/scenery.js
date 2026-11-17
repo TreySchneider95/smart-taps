@@ -1,5 +1,5 @@
 /* Scenery behind the tap board: a small ambient scene per season (grass, snow, falling
-   leaves…) or theme (Husker game day), plus surprises that wander through now and then.
+   leaves…) or theme (Husker football and volleyball), plus surprises that wander through now and then.
    To add a scene: an AMBIENT entry, a SURPRISES entry, a CATALOG row, and its key in
    SCENES in backend/taps/server.py.
 
@@ -585,14 +585,188 @@
     balloons: { w: 1, run: () => balloons() },
   };
 
+  // ================================================================ volleyball (Husker volleyball)
+  // Side view of the court: home side on the left, net at 50vw (between the 2nd and 3rd taps).
+  const NAVY = "#1D4E9E";
+  const VB_BASE = 2.5; // vh: where players' feet (and the ball's y = 0) sit, on the floor
+
+  // a volleyball player facing right; the hitting arm is .vb-arm so it can swing
+  function vbPlayer({ jersey, num, numC, shorts, hair }) {
+    const skin = pick(["#E8B990", "#C98E6A", "#8D5A3B", "#F1C8A5"]);
+    const leg = (x, cls) =>
+      `<g class="vb-leg ${cls}" style="transform-origin:${x}px 41px"><path d="M${x} 41V62" stroke="${skin}" stroke-width="4.6" stroke-linecap="round"/>` +
+      `<rect x="${x - 2.7}" y="48.5" width="5.4" height="5" rx="1.6" fill="#F4F4F4"/><path d="M${x - 2} 63.5h6" stroke="#F4F4F4" stroke-width="3.2" stroke-linecap="round"/></g>`;
+    return svgH("0 0 40 70", 12,
+      `${leg(19, "b")}<path d="M17 21L16 34" stroke="${skin}" stroke-width="3.6" stroke-linecap="round"/>` +
+      `<path d="M17 8Q9 11 10 21Q13 15 18 13Z" fill="${hair}"/>` +
+      `<path d="M15 18Q22 15 29 18L28 36L16 36Z" fill="${jersey}"/>` +
+      `<text x="22" y="30.5" text-anchor="middle" font-family="Barlow Condensed, sans-serif" font-weight="800" font-size="9" fill="${numC}">${num}</text>` +
+      `<path d="M15.5 35L28.5 35L29 41L15 41Z" fill="${shorts}"/>${leg(25, "a")}` +
+      `<rect x="20" y="13" width="4" height="5" fill="${skin}"/><circle cx="22" cy="9" r="6.5" fill="${skin}"/>` +
+      `<path d="M15.6 8Q16 2 22 2Q28 2 28.4 7Q24 4.5 15.6 8Z" fill="${hair}"/><circle cx="25.5" cy="8.6" r=".8" fill="#222"/>` +
+      `<g class="vb-arm" style="transform-origin:26px 20px"><path d="M26 20L28 33" stroke="${skin}" stroke-width="3.6" stroke-linecap="round"/></g>`);
+  }
+  const vbHusker = () => vbPlayer({ jersey: RED, num: pick(["1", "4", "10", "13", "25"]), numC: CREAM, shorts: "#1A1A1A", hair: pick(["#3A2A1E", "#C8A05A", "#6B4226", "#1F1A17"]) });
+  const vbVisitor = () => vbPlayer({ jersey: NAVY, num: pick(["3", "7", "11", "22"]), numC: "#FFFFFF", shorts: "#FFFFFF", hair: pick(["#3A2A1E", "#C8A05A", "#1F1A17"]) });
+  const VBALL = `<circle cx="10" cy="10" r="9.2" fill="#F7F7F2" stroke="#C9C9C0" stroke-width=".6"/>` +
+    `<path d="M10 .8Q4 7 6 19M10 .8Q16 7 14 19M1.2 8Q10 12 18.8 8" stroke="#B9B9B0" stroke-width=".9" fill="none"/>` +
+    `<path d="M10 .8Q16 7 14 19Q18 15 18.8 8Q16 3 10 .8Z" fill="${RED}" opacity=".85"/>`;
+
+  function vbCourt() {
+    // banners for the program's national titles, hanging from the rafters over the header
+    const banners = [1995, 2000, 2006, 2015, 2017].map((y, i) =>
+      sway(svgH("0 0 30 54", 9.5,
+        `<path d="M0 0H30V46L15 54L0 46Z" fill="#B80000"/><path d="M2.5 2.5H27.5V44.5L15 51L2.5 44.5Z" fill="none" stroke="${CREAM}" stroke-width=".9"/>` +
+        `<path d="M15 9l1.5 3.4 3.6.3-2.8 2.4.9 3.6L15 16.8l-3.2 1.9.9-3.6-2.8-2.4 3.6-.3Z" fill="${CREAM}"/>` +
+        `<text x="15" y="34" text-anchor="middle" font-family="Barlow Condensed, sans-serif" font-weight="800" font-size="10" fill="${CREAM}">${y}</text>`),
+        `left:${31 + i * 8}vw`, { amp: 1.5, dur: rand(5, 8), kind: "sc-sway vb-banner" })).join("");
+    return `<div class="vb-n">N</div>${banners}${gdStands()}` +
+      `<div class="vb-court"><i class="vb-line" style="left:8vw"></i><i class="vb-line" style="left:92vw"></i>` +
+      `<i class="vb-line dash" style="left:36vw"></i><i class="vb-line dash" style="left:64vw"></i><i class="vb-line" style="left:50vw"></i></div>` +
+      `<div class="vb-net">${svgH("0 0 24 100", 17,
+        `<rect x="11" y="6" width="2" height="94" fill="#8A8F96"/><rect x="10" y="96" width="4" height="4" fill="#5A5F66"/>` +
+        `<rect x="2" y="8" width="20" height="36" fill="rgba(20,20,20,.35)"/>` +
+        `<path d="${Array.from({ length: 9 }, (_, i) => `M${2 + i * 2.5} 8V44`).join("")}${Array.from({ length: 9 }, (_, i) => `M2 ${8 + i * 4.5}H22`).join("")}" stroke="rgba(255,255,255,.45)" stroke-width=".5"/>` +
+        `<rect x="1" y="6" width="22" height="3" fill="#FFFFFF"/><rect x="1" y="43" width="22" height="1.6" fill="#FFFFFF"/>` +
+        `<path d="M3 -8V8" stroke="#FFFFFF" stroke-width="1.4"/><path d="M3 -8V-4M3 0V4" stroke="${RED}" stroke-width="1.4"/>`)}</div>`;
+  }
+  AMBIENT.volleyball = vbCourt;
+
+  // ball flight through a series of arcs. Points are [x vw, y vh above VB_BASE];
+  // `peak` lifts the middle of each leg above the straight line between its ends.
+  function arcFrames(start, legs, total) {
+    const frames = [{ transform: `translate(${start[0]}vw, ${-start[1]}vh)`, offset: 0 }];
+    let t = 0, [x0, y0] = start;
+    for (const { to: [x1, y1], peak = 0, dur } of legs) {
+      for (let i = 1; i <= 10; i++) {
+        const s = i / 10;
+        const x = x0 + (x1 - x0) * s, y = y0 + (y1 - y0) * s + 4 * peak * s * (1 - s);
+        frames.push({ transform: `translate(${f1(x)}vw, ${f1(-y)}vh)`, offset: Math.min(1, (t + dur * s) / total) });
+      }
+      t += dur; x0 = x1; y0 = y1;
+    }
+    return frames;
+  }
+  const play$ = (el, frames, secs, opts = {}) => el.animate(frames, { duration: secs * 1000, fill: "both", easing: "linear", ...opts });
+  const vbBall = (box) => {
+    const b = document.createElement("div");
+    b.className = "vb-ball";
+    b.innerHTML = `<div class="sc-spin" style="--sp:.6s">${svgH("0 0 20 20", 3, VBALL)}</div>`;
+    box.appendChild(b);
+    return b;
+  };
+  const bump = (player, secs = 0.35) => play$(player.querySelector(".vb-arm"),
+    [{ transform: "rotate(0)" }, { transform: "rotate(-75deg)", offset: 0.4 }, { transform: "rotate(0)" }], secs, { fill: "none" });
+
+  function vbSpike() {
+    const T = 4.6;
+    const box = spawn(`<div class="vb-p vb-run">${vbHusker()}</div><div class="vb-p"><div class="gd-flipx">${vbVisitor()}</div></div>` +
+      `<div class="gd-pow vb-pow">${svgH("0 0 40 40", 8, `<path d="M20 2L24 14L37 9L28 20L38 30L25 27L20 39L16 27L3 31L12 20L4 9L16 14Z" fill="${GOLD}"/><path d="M20 9L22.5 16L30 14L25 20L31 26L23.5 24L20 31L17.5 24L10 26L15 20L10 14L17.5 16Z" fill="#fff"/>`)}</div>`,
+      "vb-stage", `bottom:${VB_BASE}vh;--dur:${T}s`, T + 0.5);
+    if (!box) return;
+    const [hitter, opp] = box.querySelectorAll(".vb-p");
+    // approach, jump (contact at ~46%), land, then slip away
+    play$(hitter, [
+      { transform: "translate(-12vw, 0)", opacity: 1 },
+      { transform: "translate(33vw, 0)", offset: 0.32 },
+      { transform: "translate(37vw, -13vh)", offset: 0.46, easing: "ease-in" },
+      { transform: "translate(39vw, 0)", offset: 0.6 },
+      { transform: "translate(39vw, 0)", opacity: 1, offset: 0.86 },
+      { transform: "translate(39vw, 0)", opacity: 0 }], T);
+    setTimeout(() => hitter.classList.remove("vb-run"), T * 320);
+    play$(hitter.querySelector(".vb-arm"), [
+      { transform: "rotate(0)" }, { transform: "rotate(0)", offset: 0.36 }, { transform: "rotate(-170deg)", offset: 0.43 },
+      { transform: "rotate(-30deg)", offset: 0.48 }, { transform: "rotate(0)", offset: 0.6 }, { transform: "rotate(0)" }], T);
+    // the visitor waits at 68vw and gets flattened by the spike
+    play$(opp, [
+      { transform: "translate(68vw, 0) rotate(0)", opacity: 0 },
+      { transform: "translate(68vw, 0) rotate(0)", opacity: 1, offset: 0.12 },
+      { transform: "translate(68vw, 0) rotate(0)", offset: 0.53, easing: "ease-out" },
+      { transform: "translate(71vw, 1vh) rotate(78deg)", offset: 0.6 },
+      { transform: "translate(71vw, 1vh) rotate(78deg)", opacity: 1, offset: 0.88 },
+      { transform: "translate(71vw, 1vh) rotate(78deg)", opacity: 0 }], T);
+    setTimeout(() => {
+      const legs = [
+        { to: [41.5, 24], peak: 7, dur: T * 0.16 },   // the set
+        { to: [69, 6], dur: T * 0.07 },               // the spike, over the net
+        { to: [79, 13], peak: 5, dur: T * 0.1 },      // ricochet off the visitor
+        { to: [88, 0], peak: 3, dur: T * 0.1 },
+        { to: [106, 0], dur: T * 0.08 },              // and rolls away
+      ];
+      const total = legs.reduce((t, l) => t + l.dur, 0);
+      play$(vbBall(box), arcFrames([46, 3], legs, total), total);
+    }, T * 300);
+    setTimeout(gdRoar, T * 530);
+  }
+
+  function vbRally() {
+    const T = 9.5;
+    const box = spawn(`<div class="vb-p vb-ready">${vbHusker()}</div><div class="vb-p vb-ready"><div class="gd-flipx">${vbVisitor()}</div></div>`,
+      "vb-stage", `bottom:${VB_BASE}vh`, T + 0.5);
+    if (!box) return;
+    const [home, away] = box.querySelectorAll(".vb-p");
+    const show = (el, x) => play$(el, [
+      { transform: `translate(${x}vw, 0)`, opacity: 0 }, { transform: `translate(${x}vw, 0)`, opacity: 1, offset: 0.06 },
+      { transform: `translate(${x}vw, 0)`, opacity: 1, offset: 0.9 }, { transform: `translate(${x}vw, 0)`, opacity: 0 }], T);
+    show(home, 29); show(away, 66);
+    const H = [33.5, 7], A = [66, 7], leg = 1.35;
+    const legs = [{ to: A, peak: 26, dur: leg }, { to: H, peak: 26, dur: leg }, { to: A, peak: 24, dur: leg }, { to: H, peak: 26, dur: leg },
+      { to: [77, 0], peak: 12, dur: 0.95 }, { to: [86, 5], peak: 2, dur: 0.45 }, { to: [94, 0], peak: 2, dur: 0.45 }];
+    const total = legs.reduce((t, l) => t + l.dur, 0), start = 0.8;
+    setTimeout(() => {
+      play$(vbBall(box), arcFrames(H, legs, total), total);
+      // each player bumps as the ball reaches them; the last Husker hit finds the floor
+      [0, 2, 4].forEach((k) => setTimeout(() => bump(home), k * leg * 1000));
+      [1, 3].forEach((k) => setTimeout(() => bump(away), k * leg * 1000));
+      setTimeout(gdRoar, (4 * leg + 0.95) * 1000);
+    }, start * 1000);
+  }
+
+  function vbSigns() {
+    const signs = ["G", "B", "R"].map((ch, i) =>
+      `<div class="vb-sign" style="left:${25 + i * 25}vw;animation-delay:${f1(i * 0.8)}s"><div class="vb-card">${ch}</div><i class="vb-hand l"></i><i class="vb-hand r"></i></div>`).join("");
+    spawn(signs, "sc-burst", "", 9);
+    setTimeout(gdRoar, 2400);
+  }
+
+  function vbConfetti() {
+    let s = "";
+    for (let i = 0; i < 70; i++) {
+      s += `<i class="vb-confetti" style="left:${f1(rand(0, 100))}vw;--c:${pick([RED, CREAM, "#FFFFFF", "#9E0000"])};--dur:${f1(rand(5, 8.5))}s;` +
+        `animation-delay:${f1(rand(0, 1.8))}s;--dx:${f1(rand(-6, 6))}vw;--fl:${f1(rand(0.6, 1.4))}s"><b></b></i>`;
+    }
+    spawn(s, "sc-burst", "", 11);
+    gdRoar();
+  }
+
+  function vbLightShow() {
+    let s = "";
+    for (let i = 0; i < 60; i++) {
+      s += `<i class="vb-phone" style="left:${f1(rand(1, 99))}%;bottom:${f1(rand(5, 88))}%;--sd:${f1(rand(1.2, 2.4))}s;--sdl:${f1(-rand(0, 2))}s"></i>`;
+    }
+    spawn(`<div class="vb-dark"></div>${s}`, "vb-lights sc-fade", "--dur:10s", 10);
+  }
+
+  SURPRISES.volleyball = {
+    signs: { w: 2, run: vbSigns },
+    spike: { w: 2, run: vbSpike },
+    rally: { w: 2, run: vbRally },
+    confetti: { w: 1, run: vbConfetti },
+    lights: { w: 1, run: vbLightShow },
+    wave: SURPRISES.gameday.wave,
+    mascot: SURPRISES.gameday.mascot,
+  };
+
   // scene list for the console (seasons rotate under "auto"; the rest are themes)
   const FOOTBALL_ICON = `<ellipse cx="16" cy="16" rx="13" ry="8" fill="#9A5B2E" transform="rotate(-30 16 16)"/><path d="M11 19L21 13M13 15.4l1.6 2.6M15.6 13.8l1.6 2.6M18.2 12.2l1.6 2.6" stroke="#fff" stroke-width="1.4" stroke-linecap="round"/>`;
+  const VOLLEYBALL_ICON = `<circle cx="16" cy="16" r="12" fill="#F7F7F2"/><path d="M16 4Q8 12 11 28M16 4Q24 12 21 28M4.5 13Q16 18 27.5 13" stroke="#9A9A92" stroke-width="1.4" fill="none"/><path d="M16 4Q24 12 21 28Q27 22 27.5 13Q24 6 16 4Z" fill="#D00000"/>`;
   const CATALOG = [
     { key: "spring", label: "Spring", seasonal: true },
     { key: "summer", label: "Summer", seasonal: true },
     { key: "fall", label: "Fall", seasonal: true },
     { key: "winter", label: "Winter", seasonal: true },
     { key: "gameday", label: "Game Day", icon: FOOTBALL_ICON },
+    { key: "volleyball", label: "Volleyball", icon: VOLLEYBALL_ICON },
   ];
 
   // ================================================================ engine

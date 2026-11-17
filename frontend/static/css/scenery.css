@@ -293,6 +293,70 @@ body.console-open #scenery { display: none; }   /* nothing to see under the cons
 .gd-balloon { position: absolute; bottom: -10vh; will-change: transform; animation: gd-up var(--dur) ease-in both; }
 @keyframes gd-up { from { transform: translate(0, 0); } to { transform: translate(var(--dx), -125vh); } }
 
+/* ============ Volleyball (Husker volleyball) ============ */
+/* a big red N drifting behind everything */
+.vb-n {
+  position: absolute; left: 50%; top: 8vh; transform: translateX(-50%);
+  font: 800 50vh/1 var(--cond); color: #FF1A1A; opacity: .2; mix-blend-mode: screen;  /* screen keeps it red, not brown, on dark boards */
+  animation: vb-float 9s ease-in-out infinite alternate;
+}
+@keyframes vb-float { from { transform: translate(-50%, -1.4vh) rotate(-2deg); } to { transform: translate(-50%, 1.4vh) rotate(2deg); } }
+/* title banners hanging over the header */
+.vb-banner { top: -.6vh; bottom: auto; transform-origin: 50% 0; }
+
+.vb-court {
+  position: absolute; left: 0; right: 0; bottom: 0; height: 7.5vh;
+  background:
+    repeating-linear-gradient(90deg, rgba(0, 0, 0, .06) 0 1px, transparent 1px 3vw),
+    linear-gradient(90deg, #8E1B1B 0 8vw, #D39A5E 8vw 92vw, #8E1B1B 92vw);
+  box-shadow: inset 0 .6vh 1vh rgba(0, 0, 0, .3);
+}
+.vb-line { position: absolute; top: 0; bottom: 0; width: 3px; margin-left: -1.5px; background: rgba(255, 255, 255, .85); }
+.vb-line.dash { background: repeating-linear-gradient(to bottom, rgba(255, 255, 255, .85) 0 .8vh, transparent .8vh 1.4vh); }
+.vb-net { position: absolute; left: 50vw; bottom: 3vh; margin-left: -2.04vh; }
+
+/* players, ball and the hit (positions are driven from scenery.js with the Web Animations API) */
+.vb-stage { right: 0; height: 32vh; }
+.vb-p { position: absolute; left: 0; bottom: 0; transform-origin: 50% 100%; will-change: transform; }
+.vb-run .vb-leg { animation: gd-run .34s ease-in-out infinite alternate; }
+.vb-run .vb-leg.b { animation-direction: alternate-reverse; }
+.vb-ready svg { animation: sc-bob .55s ease-in-out infinite alternate; --amp: .3vh; }
+.vb-ball { position: absolute; left: 0; bottom: 0; margin: 0 0 -1.5vh -1.5vh; will-change: transform; }
+.vb-pow { left: 66vw; bottom: 4vh; }
+
+/* G · B · R signs popping up in the stands, one after another */
+.vb-sign { position: absolute; bottom: 21vh; margin-left: -4.5vh; width: 9vh; opacity: 0; animation: vb-sign 7s cubic-bezier(.3, 1.4, .5, 1) both; }
+@keyframes vb-sign {
+  0% { transform: translateY(7vh) scale(.5); opacity: 0; }
+  8%, 80% { transform: translateY(0) scale(1); opacity: 1; }
+  90%, 100% { transform: translateY(6vh) scale(.6); opacity: 0; }
+}
+.vb-card {
+  width: 9vh; height: 10vh; border-radius: .6vh; background: #F7F4EC;
+  display: flex; align-items: center; justify-content: center;
+  font: 800 8.5vh/1 var(--cond); color: #D00000; box-shadow: 0 .4vh 1vh rgba(0, 0, 0, .45);
+  animation: sc-bob .5s ease-in-out infinite alternate; --amp: .4vh;
+}
+.vb-hand { position: absolute; bottom: -.6vh; width: 1.8vh; height: 1.8vh; border-radius: 50%; background: #E8B990; }
+.vb-hand.l { left: .6vh; }
+.vb-hand.r { right: .6vh; }
+
+/* confetti */
+.vb-confetti { position: absolute; top: 0; width: .9vh; height: 1.4vh; will-change: transform; animation: vb-drop var(--dur) linear both; }
+.vb-confetti b { display: block; width: 100%; height: 100%; background: var(--c); animation: vb-flutter var(--fl) linear infinite; }
+@keyframes vb-drop { from { transform: translate(0, -6vh); } to { transform: translate(var(--dx), 108vh); } }
+@keyframes vb-flutter { to { transform: rotate3d(1, .6, .3, 360deg); } }
+
+/* lights down, phone flashlights up */
+.vb-lights { right: 0; bottom: 7.5vh; height: 26vh; }
+.vb-dark { position: absolute; inset: 0; background: radial-gradient(ellipse at 50% 100%, rgba(0, 0, 0, .55), rgba(0, 0, 0, .25) 70%, transparent); }
+.vb-phone {
+  position: absolute; width: .7vh; height: .7vh; border-radius: 50%; background: #fff;
+  box-shadow: 0 0 1vh .3vh rgba(255, 255, 255, .8);
+  animation: vb-sway var(--sd) ease-in-out var(--sdl) infinite alternate;
+}
+@keyframes vb-sway { from { transform: translateX(-.8vw); opacity: .6; } to { transform: translateX(.8vw); opacity: 1; } }
+
 @media (prefers-reduced-motion: reduce) {
   #scenery *, #scenery *::before { animation: none !important; }
   .sc-fall, .sc-actors { display: none; }
