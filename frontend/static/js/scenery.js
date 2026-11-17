@@ -90,7 +90,7 @@
       `<circle cx="55" cy="46" r="32" fill="${c2}"/><circle cx="98" cy="44" r="30" fill="${c1}"/><circle cx="75" cy="100" r="34" fill="${c1}"/>` +
       `<circle cx="22" cy="62" r="20" fill="${c2}"/><circle cx="128" cy="60" r="20" fill="${c2}"/>` +
       `<circle cx="58" cy="34" r="12" fill="${hi}" opacity=".55"/><circle cx="100" cy="30" r="9" fill="${hi}" opacity=".45"/>${dots}`);
-    const trunk = svgH("0 0 40 120", 36,
+    const trunk = svgH("0 0 40 120", 50, // tall enough that its top tucks up inside the crown
       `<path d="M14 120C16 90 15 60 18 30L22 30C25 60 24 90 28 120Z" fill="#6B4A2E"/>` +
       `<path d="M19 70C12 58 8 52 2 46M21 55C28 45 32 40 38 36" stroke="#6B4A2E" stroke-width="4" fill="none" stroke-linecap="round"/>`);
     return `<div class="sc-tree"><div class="sc-trunk">${trunk}</div>${sway(canopy, "", { amp: 1.2, dur: 7, kind: "sc-sway sc-canopy" })}</div>`;
