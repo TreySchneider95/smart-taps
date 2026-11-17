@@ -479,31 +479,19 @@
       `<g class="gd-pom r" style="transform-origin:37px 38px"><path d="M37 38L45 30" stroke="#6AA046" stroke-width="3.4" stroke-linecap="round"/>${pom(46, 27)}</g>`);
   }
 
-  // scoreboard in the header: lives for the day (resets at midnight)
+  // the red balloons go up after the first touchdown of the day
   const GD_KEY = "taps.gameday";
-  function gdScore() {
+  function firstTouchdownToday() {
     const day = new Date().toDateString();
-    try { const s = JSON.parse(localStorage.getItem(GD_KEY)); if (s && s.day === day) return s; } catch {}
-    return { day, home: 0, away: 0, tds: 0 };
+    let seen = false;
+    try { seen = localStorage.getItem(GD_KEY) === day; localStorage.setItem(GD_KEY, day); } catch {}
+    return !seen;
   }
-  function gdSave(s) { try { localStorage.setItem(GD_KEY, JSON.stringify(s)); } catch {} }
+  // the crowd jumps for a few seconds after a big play
   function gdRoar() {
     layer.classList.add("gd-roar");
     clearTimeout(gdRoar.t);
     gdRoar.t = setTimeout(() => layer.classList.remove("gd-roar"), 4500);
-  }
-  function gdFlash(msg, points = 0) {
-    const board = layer.querySelector(".gd-board");
-    if (!board) return;
-    const s = gdScore();
-    s.home += points;
-    gdSave(s);
-    board.querySelector(".gd-home").textContent = s.home;
-    board.querySelector(".gd-msg").textContent = msg;
-    board.classList.add("flash");
-    gdRoar();
-    clearTimeout(gdFlash.t);
-    gdFlash.t = setTimeout(() => { board.classList.remove("flash"); board.querySelector(".gd-msg").textContent = "GAME DAY"; }, 3800);
   }
 
   function gdStands() {
@@ -520,23 +508,21 @@
     return `<div class="gd-stands"><div class="gd-rim"></div>${rows}</div>`;
   }
 
+  // zoomed in on the red zone: the 40 on the left, goal line and end zone on the right.
+  // 1 yard = 2vw, so the 40 sits at 6vw and the goal line at 86vw.
+  const GOAL_LINE_VW = 86;
   function gdField() {
     let lines = "", nums = "";
-    for (let i = 0; i <= 10; i++) {
-      const x = 7 + i * 8.6;
-      lines += `<i class="gd-line" style="left:${f1(x)}vw"></i>`;
-      if (i > 0 && i < 10) nums += `<span class="gd-num" style="left:${f1(x)}vw">${(i <= 5 ? i : 10 - i) * 10}</span>`;
+    for (let yd = 40; yd >= 0; yd -= 5) {
+      const x = GOAL_LINE_VW - yd * 2;
+      lines += `<i class="gd-line${yd === 0 ? " goal" : ""}" style="left:${x}vw"></i>`;
+      if (yd && yd % 10 === 0) nums += `<span class="gd-num" style="left:${x}vw">${yd}</span><i class="gd-arrow" style="left:${x + 2.9}vw"></i>`;
     }
-    return `<div class="gd-field">${lines}${nums}<div class="gd-endzone l"><span>NEBRASKA</span></div><div class="gd-endzone r"><span>NEBRASKA</span></div></div>` +
+    return `<div class="gd-field"><div class="gd-hash"></div>${lines}${nums}<div class="gd-endzone"><span>NEBRASKA</span></div></div>` +
       `<div class="gd-goal">${svgH("0 0 40 100", 20, `<path d="M6 0V55H34V0M20 55V100" stroke="${GOLD}" stroke-width="3" fill="none"/>`)}</div>`;
   }
 
-  AMBIENT.gameday = () => {
-    const s = gdScore();
-    return gdStands() + gdField() +
-      `<div class="gd-board"><div class="gd-team"><span>HUSKERS</span><b class="gd-home">${s.home}</b></div>` +
-      `<div class="gd-msg">GAME DAY</div><div class="gd-team"><span>VISITORS</span><b>${s.away}</b></div></div>`;
-  };
+  AMBIENT.gameday = () => gdStands() + gdField();
 
   function balloons(n = 28) {
     let s = "";
@@ -570,22 +556,21 @@
     touchdown: { w: 2, run: () => {
       const d = rand(6.5, 8);
       cross(husker(true), { bottom: 2, dur: d, rtl: false, bob: "gd-stride" });
+      // he breaks the plane about 82% of the way across (goal line at 86vw)
       setTimeout(() => {
-        const s = gdScore();
-        gdFlash("TOUCHDOWN!", 7);
-        // tradition: red balloons go up after the first touchdown
-        if (!s.tds) { const n = gdScore(); n.tds = 1; gdSave(n); setTimeout(() => balloons(), 1200); }
-      }, d * 930);
+        gdRoar();
+        if (firstTouchdownToday()) setTimeout(() => balloons(), 1200); // tradition: balloons after the first TD
+      }, d * 820);
     } },
     fieldgoal: { w: 1.6, run: () => {
       spawn(`<div class="gd-arc"><div class="sc-spin" style="--sp:.5s">${svgH("0 0 20 12", 3.4, FOOTBALL)}</div></div>`, "gd-kick", "bottom:8vh;left:0;--dur:3s", 3);
-      setTimeout(() => gdFlash("IT'S GOOD!", 3), 2700);
+      setTimeout(gdRoar, 2700);
     } },
     tackle: { w: 1.6, run: () => {
       spawn(`<div class="gd-t-husker">${husker()}</div><div class="gd-t-visitor"><div class="gd-flipx">${visitor(true)}</div></div>` +
         `<div class="gd-pow">${svgH("0 0 40 40", 9, `<path d="M20 2L24 14L37 9L28 20L38 30L25 27L20 39L16 27L3 31L12 20L4 9L16 14Z" fill="${GOLD}"/><path d="M20 9L22.5 16L30 14L25 20L31 26L23.5 24L20 31L17.5 24L10 26L15 20L10 14L17.5 16Z" fill="#fff"/>`)}</div>`,
         "gd-tackle", "bottom:2vh;--dur:7s", 7);
-      setTimeout(() => gdFlash("BIG HIT!"), 3500);
+      setTimeout(gdRoar, 3500);
     } },
     mascot: { w: 1.5, run: () => {
       const rtl = Math.random() < 0.5;
@@ -595,7 +580,6 @@
     wave: { w: 1.4, run: () => {
       const pass = () => spawn(`<div class="gd-wave"></div>`, "sc-cross gd-wave-run", "bottom:7.5vh;--dur:4.2s", 4.2);
       pass(); setTimeout(pass, 4600);
-      setTimeout(() => gdFlash("DO THE WAVE!"), 300);
     } },
     fireworks: { w: 1.2, run: fireworks },
     balloons: { w: 1, run: () => balloons() },

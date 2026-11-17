@@ -133,7 +133,7 @@ Gear icon, then **Appearance**:
   | Summer | swaying grass, sunflowers, a shade tree, sun and clouds | birds, butterflies, a bee, hot-air balloon, a plane towing a banner |
   | Fall | scarecrow, pumpkins and a jack-o'-lantern, falling leaves, harvest moon | ghost (more in October, sometimes says BOO), bats, black cat, squirrel, gust of leaves |
   | Winter | snowfall, snowman (who waves now and then), pines, string lights | Santa's sleigh (mostly in December), shooting stars, sliding penguin, northern lights, flurries |
-  | Game Day | a football field with goal posts, stands full of red, a scoreboard that keeps the day's score | touchdown run (+7, and red balloons after the first one each day), field goal (+3), a big hit on a black-and-gold visitor, a corn mascot doing cartwheels, the wave, red and white fireworks, red balloons |
+  | Game Day | the red zone, from the 40 to the end zone and goal posts, with stands full of red | touchdown run (red balloons after the first one each day), field goal, a big hit on a black-and-gold visitor, a corn mascot doing cartwheels, the wave, red and white fireworks, red balloons |
 
 - **Surprises:** Calm (every few minutes), Lively (about once a minute) or Party (all the time).
   **Show me a surprise** closes the console and plays one right away.
