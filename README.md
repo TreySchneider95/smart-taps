@@ -8,10 +8,11 @@ Raspberry Pi 5 with a touch display.
   and ABV, and a keg gauge filled with the beer's real color (from its SRM, or
   red/white/rosé for wine) showing % and gallons left. It bubbles while someone is
   pouring. The wine tap has a **Charge CO2** button, and the cabinet temperature sits
-  top right.
+  top right. Behind it all runs a seasonal scene (see below).
 - **The console (gear icon, top right).** Swap what's on each tap from your
   beer library, mark a keg as kicked, start a fresh keg, set how full a keg is (until
-  flow meters do it for you), and charge CO₂. Everything is done by tapping; there's no
+  flow meters do it for you), and charge CO₂. The **Appearance** button at the top picks
+  the background color and seasonal scene. Everything is done by tapping; there's no
   keyboard on screen. You can lock it with a PIN.
 - **The `taps` CLI (over SSH).** Add new beers from your Mac, edit them, and
   import or export the library.
@@ -117,6 +118,28 @@ To bulk-load beers, put them in a JSON list (run `taps export` to see the format
 `ssh pi@kegerator.local 'cd smart-taps && ./taps import -' < beers.json`
 
 Set `TAPS_SSH_TARGET` in `.env` (e.g. `pi@kegerator.local`) so the touch console shows the right SSH command.
+
+### Appearance and seasonal scenes
+
+Gear icon, then **Appearance**:
+
+- **Background color:** olive, deep plum or charcoal, each with a cooler/warmer slider.
+- **Season scene:** a small animated scene behind the taps, plus surprises that wander through.
+  **Auto** follows the calendar (Mar–May spring, Jun–Aug summer, Sep–Nov fall, Dec–Feb winter).
+
+  | Scene | Always there | Surprises |
+  |---|---|---|
+  | Spring | blooming flowers, grass, a blossom tree, drifting petals | bunny, duck family, rain shower and rainbow, butterflies, hedgehog, birds |
+  | Summer | swaying grass, sunflowers, a shade tree, sun and clouds | birds, butterflies, a bee, hot-air balloon, a plane towing a banner |
+  | Fall | scarecrow, pumpkins and a jack-o'-lantern, falling leaves, harvest moon | ghost (more in October, sometimes says BOO), bats, black cat, squirrel, gust of leaves |
+  | Winter | snowfall, snowman (who waves now and then), pines, string lights | Santa's sleigh (mostly in December), shooting stars, sliding penguin, northern lights, flurries |
+
+- **Surprises:** Calm (every few minutes), Lively (about once a minute) or Party (all the time).
+  **Show me a surprise** closes the console and plays one right away.
+
+Everything is drawn behind the taps, so it never covers a name or a keg. The scene pauses while
+the console is open. To try a scene or surprise from a browser without changing the setting, add
+it to the URL, e.g. `http://<pi>.local:8080/?scene=winter&surprise=santa`.
 
 ---
 
@@ -244,7 +267,8 @@ backend/
     hardware/      temperature.py (DS18B20), flow.py (meters), relay.py (CO₂) + mock versions
   config.example.toml   copied to data/config.toml on first start
 frontend/
-  index.html, static/   chalkboard display + console (plain JS), bundled font (Barlow Condensed)
+  index.html, static/   chalkboard display + console (plain JS), bundled font (Barlow Condensed);
+                        js/scenery.js + css/scenery.css draw the seasonal scenes
   nginx.conf            serves the UI, proxies /api to the backend
 deploy/
   push.sh        rsync to the Pi + docker compose up -d --build

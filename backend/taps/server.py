@@ -49,12 +49,16 @@ class BubblesBody(BaseModel):
 
 
 THEMES = ("olive", "plum", "charcoal")
-DEFAULT_APPEARANCE = {"theme": "olive", "warmth": 0}
+SCENES = ("off", "auto", "spring", "summer", "fall", "winter")
+SURPRISES = ("calm", "lively", "party")
+DEFAULT_APPEARANCE = {"theme": "olive", "warmth": 0, "scene": "auto", "surprises": "lively"}
 
 
 class AppearanceBody(BaseModel):
-    theme: Literal["olive", "plum", "charcoal"]
-    warmth: int = Field(0, ge=-5, le=5)   # -5 coolest .. +5 warmest
+    theme: Literal["olive", "plum", "charcoal"]                       # background color
+    warmth: int = Field(0, ge=-5, le=5)                               # -5 coolest .. +5 warmest
+    scene: Literal["off", "auto", "spring", "summer", "fall", "winter"] = "auto"  # auto = by the date
+    surprises: Literal["calm", "lively", "party"] = "lively"          # how often critters show up
 
 
 def logo_url(name: str | None) -> str | None:
@@ -120,12 +124,15 @@ def create_app(cfg: config_mod.Config | None = None) -> FastAPI:
 
     def appearance() -> dict:
         a = db.get_setting("appearance") or {}
-        theme = a.get("theme") if a.get("theme") in THEMES else DEFAULT_APPEARANCE["theme"]
+        def pick(key, allowed):
+            return a.get(key) if a.get(key) in allowed else DEFAULT_APPEARANCE[key]
+
         try:
             warmth = max(-5, min(5, int(a.get("warmth", 0))))
         except (TypeError, ValueError):
             warmth = 0
-        return {"theme": theme, "warmth": warmth}
+        return {"theme": pick("theme", THEMES), "warmth": warmth,
+                "scene": pick("scene", SCENES), "surprises": pick("surprises", SURPRISES)}
 
     def tap_state() -> list[dict]:
         rows = {r["tap_id"]: r for r in db.tap_rows()}

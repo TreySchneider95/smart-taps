@@ -6,8 +6,10 @@
   <title>On Tap</title>
   <link rel="icon" href="data:,">
   <link rel="stylesheet" href="/static/css/app.css">
+  <link rel="stylesheet" href="/static/css/scenery.css">
 </head>
 <body>
+  <div id="scenery" aria-hidden="true"></div>
   <header class="board__header">
     <h1 class="brand"><span id="barName">On Tap</span><span class="brand__sub" id="barTag">The Basement Bar</span></h1>
     <div class="header-right">
@@ -33,10 +35,13 @@
   <section class="console" id="console" hidden>
     <header class="console-head">
       <div>
-        <div class="eyebrow">Management</div>
-        <h1>Tap Console</h1>
+        <div class="eyebrow" id="consoleEyebrow">Management</div>
+        <h1 id="consoleTitle">Tap Console</h1>
       </div>
-      <button class="btn ghost" id="closeConsole">Done</button>
+      <div class="console-actions">
+        <button class="btn ghost" id="consoleNav" hidden></button>
+        <button class="btn ghost" id="closeConsole">Done</button>
+      </div>
     </header>
     <div class="console-body" id="consoleBody"></div>
     <footer class="console-foot" id="consoleFoot"></footer>
@@ -44,6 +49,7 @@
   <div class="toast" id="toast" hidden></div>
 
   <script src="/static/js/display.js"></script>
+  <script src="/static/js/scenery.js"></script>
   <script src="/static/js/console.js"></script>
 </body>
 </html>

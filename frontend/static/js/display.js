@@ -93,10 +93,11 @@
   let holdUntil = 0; // after a save, ignore polls that were already in flight with the old value
   app.holdAppearance = () => { holdUntil = Date.now() + 2000; };
   function applyAppearance(a, force = false) {
-    const key = a && `${a.theme}|${a.warmth}`;
+    const key = a && `${a.theme}|${a.warmth}|${a.scene}|${a.surprises}`;
     if (!a || (!force && (key === appearanceKey || Date.now() < holdUntil))) return; // only repaint when the saved setting changes
     appearanceKey = key;
     app.paintAppearance(a);
+    app.scenery?.set(a);
     try { localStorage.setItem("taps.appearance", JSON.stringify(a)); } catch {}
   }
   app.applyAppearance = applyAppearance;

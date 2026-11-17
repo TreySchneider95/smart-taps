@@ -1,4 +1,5 @@
-/* On-screen management console: swap beers, kick kegs, boost CO2. No typing required. */
+/* On-screen management console: swap beers, kick kegs, boost CO2, and (from the header)
+   pick the board's appearance and seasonal scene. No typing required. */
 (function () {
   const app = window.Taps;
   const esc = app.esc;
@@ -11,7 +12,8 @@
     unlocked: false,
     entry: "",
     tapId: null,
-    mode: "overview",     // overview | picker | confirm | appearance
+    screen: "taps",       // taps | appearance
+    mode: "overview",     // overview | picker | confirm  (on the taps screen)
     filter: "recent",
     beers: [],
     chosen: null,
@@ -19,7 +21,7 @@
     fresh: true,
     kickArmed: false,
     lastDetailKey: "",
-    look: null,           // appearance being edited: { theme, warmth }
+    look: null,           // appearance being edited: { theme, warmth, scene, surprises }
   };
 
   const consoleEl = $("#console");
@@ -70,7 +72,9 @@
     ui.entry = "";
     ui.tapId = ui.tapId ?? app.state?.taps[0]?.id ?? 1;
     ui.mode = "overview";
+    ui.screen = "taps";
     consoleEl.hidden = false;
+    document.body.classList.add("console-open");
     const foot = $("#consoleFoot");
     const ssh = app.meta?.ssh_target ? `<code>ssh ${esc(app.meta.ssh_target)}</code>` : "SSH into the Pi";
     foot.innerHTML = `New beer? From your Mac: ${ssh} then <code>cd smart-taps &amp;&amp; ./taps add</code>`;
@@ -83,9 +87,19 @@
     ui.unlocked = false;
     ui.pin = "";
     consoleEl.hidden = true;
+    document.body.classList.remove("console-open");
     clearTimeout(idleTimer);
     app.applyAppearance(app.state?.appearance, true); // drop any unsaved preview
   }
+
+  const navBtn = $("#consoleNav");
+  const PALETTE = `<svg viewBox="0 0 24 24" aria-hidden="true"><path fill="none" stroke="currentColor" stroke-width="1.6" d="M12 3a9 9 0 1 0 0 18c1.4 0 2-1 2-2s-.8-1.6-.8-2.6c0-1.2 1-2 2.2-2H18a3 3 0 0 0 3-3c0-4.6-4-8.4-9-8.4z"/><circle cx="7.5" cy="11" r="1.3" fill="currentColor"/><circle cx="10.5" cy="7" r="1.3" fill="currentColor"/><circle cx="15" cy="7.5" r="1.3" fill="currentColor"/></svg>`;
+  navBtn.addEventListener("click", () => {
+    ui.screen = ui.screen === "taps" ? "appearance" : "taps";
+    ui.look = { ...DEFAULT_LOOK, ...(app.state?.appearance || {}) };
+    ui.kickArmed = false;
+    render();
+  });
 
   $("#openConsole").addEventListener("click", open);
   $("#closeConsole").addEventListener("click", close);
@@ -99,10 +113,23 @@
   // ---------- rendering ----------
   function render() {
     if (!ui.open) return;
+    renderHead();
     if (!ui.unlocked) return renderPin();
+    if (ui.screen === "appearance") {
+      body.innerHTML = `<div class="look-screen" id="look"></div>`;
+      return renderAppearance($("#look"));
+    }
     body.innerHTML = `<div class="tap-list" id="tapList"></div><div class="detail" id="detail"></div>`;
     renderTapList();
     renderDetail();
+  }
+
+  function renderHead() {
+    const looking = ui.screen === "appearance";
+    $("#consoleEyebrow").textContent = looking ? "Settings" : "Management";
+    $("#consoleTitle").textContent = looking ? "Appearance" : "Tap Console";
+    navBtn.hidden = !ui.unlocked;
+    navBtn.innerHTML = looking ? "‹ Taps" : `${PALETTE}Appearance`;
   }
 
   function renderPin(shake = false) {
@@ -139,15 +166,14 @@
   function renderTapList(force = true) {
     const list = $("#tapList");
     if (!list || !app.state) return;
-    const looking = ui.mode === "appearance";
-    const key = JSON.stringify([ui.tapId, looking, app.state.taps.map((t) => [t.beer?.id, t.beer?.name, t.beer?.logo_url, t.keg?.id, t.keg && Math.round(t.keg.remaining_pct * 100)])]);
+    const key = JSON.stringify([ui.tapId, app.state.taps.map((t) => [t.beer?.id, t.beer?.name, t.beer?.logo_url, t.keg?.id, t.keg && Math.round(t.keg.remaining_pct * 100)])]);
     if (!force && key === tapListKey) return;
     tapListKey = key;
     list.innerHTML = app.state.taps.map((t) => {
       const b = t.beer;
       const pct = b && t.keg ? t.keg.remaining_pct : null;
       return `
-        <button class="tap-card ${t.id === ui.tapId && !looking ? "selected" : ""}" data-tap="${t.id}" ${b ? `style="--pour:${b.color_hex}"` : ""}>
+        <button class="tap-card ${t.id === ui.tapId ? "selected" : ""}" data-tap="${t.id}" ${b ? `style="--pour:${b.color_hex}"` : ""}>
           ${app.medallionHTML(b, t.id)}
           <div style="flex:1;min-width:0">
             <div class="t-name">${b ? esc(b.name) : "Empty"}</div>
@@ -155,21 +181,8 @@
             ${pct != null ? `<div class="mini-meter"><i style="width:${pct * 100}%"></i></div>` : ""}
           </div>
         </button>`;
-    }).join("") + `
-      <button class="tap-card ${looking ? "selected" : ""}" id="lookCard">
-        <span class="look-dot"></span>
-        <div style="flex:1;min-width:0">
-          <div class="t-name">Appearance</div>
-          <div class="t-sub">Background color</div>
-        </div>
-      </button>`;
-    $("#lookCard", list).addEventListener("click", () => {
-      ui.mode = "appearance";
-      ui.kickArmed = false;
-      ui.look = { ...(app.state?.appearance || { theme: "olive", warmth: 0 }) };
-      render();
-    });
-    list.querySelectorAll(".tap-card[data-tap]").forEach((c) =>
+    }).join("");
+    list.querySelectorAll(".tap-card").forEach((c) =>
       c.addEventListener("click", () => {
         ui.tapId = Number(c.dataset.tap);
         ui.mode = "overview";
@@ -181,7 +194,6 @@
 
   function renderDetail() {
     const d = $("#detail");
-    if (d && ui.mode === "appearance") return renderAppearance(d);
     const t = tap();
     if (!d || !t) return;
     ui.lastDetailKey = detailKey(t);
@@ -305,64 +317,114 @@
     );
   }
 
-  // ---------- appearance ----------
+  // ---------- appearance (its own screen, from the header button) ----------
+  const DEFAULT_LOOK = { theme: "olive", warmth: 0, scene: "auto", surprises: "lively" };
+  const SEASONS = ["spring", "summer", "fall", "winter"];
+  const ICONS = {
+    off: `<circle cx="16" cy="16" r="10" fill="none" stroke="currentColor" stroke-width="2"/><path d="M9 23L23 9" stroke="currentColor" stroke-width="2"/>`,
+    auto: `<rect x="5" y="8" width="22" height="19" rx="3" fill="none" stroke="currentColor" stroke-width="2"/><path d="M5 14H27M11 5v5M21 5v5" stroke="currentColor" stroke-width="2" stroke-linecap="round"/><circle cx="16" cy="20.5" r="2.6" fill="currentColor"/>`,
+    spring: `<g fill="#F2A7C3">${[0, 72, 144, 216, 288].map((a) => `<circle cx="16" cy="9.5" r="5" transform="rotate(${a} 16 16)"/>`).join("")}</g><circle cx="16" cy="16" r="3.6" fill="#F7D44C"/>`,
+    summer: `<g stroke="#F4C430" stroke-width="2.2" stroke-linecap="round">${[0, 45, 90, 135, 180, 225, 270, 315].map((a) => `<path d="M16 3v4" transform="rotate(${a} 16 16)"/>`).join("")}</g><circle cx="16" cy="16" r="6.5" fill="#F4C430"/>`,
+    fall: `<path d="M16 3L18.5 9L24 6.5L22 12.5L28 14L22.5 17L24 22L16 19.5L8 22L9.5 17L4 14L10 12.5L8 6.5L13.5 9Z" fill="#E07A2E"/><path d="M16 19V29" stroke="#E07A2E" stroke-width="2" stroke-linecap="round"/>`,
+    winter: `<g stroke="#A9D6F0" stroke-width="2" stroke-linecap="round">${[0, 60, 120].map((a) => `<path d="M16 4V28M12 7l4 4l4-4M12 25l4-4l4 4" transform="rotate(${a} 16 16)" fill="none"/>`).join("")}</g>`,
+  };
+  const SURPRISE_HINTS = { calm: "Something every few minutes.", lively: "About once a minute.", party: "Something's always going on." };
+  const cap = (w) => w[0].toUpperCase() + w.slice(1);
+
   function warmthLabel(w) {
     return w === 0 ? "Neutral" : `${w < 0 ? "Cooler" : "Warmer"} ${Math.abs(w)}`;
   }
 
-  function renderAppearance(d) {
+  function renderAppearance(el) {
     const look = ui.look;
-    const cards = Object.entries(app.THEMES).map(([key, th]) => `
+    const colorCards = Object.entries(app.THEMES).map(([key, th]) => `
       <button class="theme-card ${look.theme === key ? "on" : ""}" data-theme="${key}">
         <span class="theme-swatch"></span>
         <span class="theme-name">${esc(th.label)}</span>
       </button>`).join("");
-    d.innerHTML = `
-      <div class="eyebrow">Display</div>
-      <h2>Appearance</h2>
-      <div class="sub">Background color for the tap board. Changes show right away.</div>
-      <div class="field-label" style="margin-top:24px">Color</div>
-      <div class="theme-cards">${cards}</div>
-      <div class="field-label" style="margin-top:26px">Warmth</div>
-      <div class="warmth">
-        <span>Cooler</span>
-        <input type="range" id="warmth" min="-5" max="5" step="1" value="${look.warmth}" aria-label="Warmth">
-        <span>Warmer</span>
-      </div>
-      <div class="warmth" style="justify-content:center;margin-top:4px"><span class="warmth-value" id="warmthValue">${warmthLabel(look.warmth)}</span></div>
-      <div style="margin-top:24px">
-        <button class="btn ghost" id="resetLook">Reset to olive, neutral</button>
-      </div>`;
-    paintSwatches(d);
+    const now = app.scenery?.seasonOf() || "fall";
+    const sceneCards = ["off", "auto", ...SEASONS].map((key) => `
+      <button class="scene-card ${look.scene === key ? "on" : ""}" data-scene="${key}">
+        <svg viewBox="0 0 32 32" aria-hidden="true">${ICONS[key]}</svg>
+        <span class="name">${key === "off" ? "None" : cap(key)}</span>
+        ${key === "auto" ? `<span class="hint">Now: ${cap(now)}</span>` : ""}
+      </button>`).join("");
+    const chips = Object.keys(SURPRISE_HINTS)
+      .map((k) => `<button class="chip ${look.surprises === k ? "on" : ""}" data-surprises="${k}">${cap(k)}</button>`).join("");
 
-    d.querySelectorAll("[data-theme]").forEach((c) =>
+    el.innerHTML = `
+      <section class="look-section">
+        <h3>Background color</h3>
+        <div class="theme-cards">${colorCards}</div>
+        <h3 style="margin-top:22px">Warmth</h3>
+        <div class="warmth">
+          <span>Cooler</span>
+          <input type="range" id="warmth" min="-5" max="5" step="1" value="${look.warmth}" aria-label="Warmth">
+          <span>Warmer</span>
+        </div>
+        <div class="warmth" style="justify-content:center;margin-top:2px"><span class="warmth-value" id="warmthValue">${warmthLabel(look.warmth)}</span></div>
+        <button class="btn ghost" id="resetLook" style="margin-top:14px">Reset everything</button>
+      </section>
+      <section class="look-section">
+        <h3>Season scene</h3>
+        <div class="scene-cards">${sceneCards}</div>
+        <h3 style="margin-top:22px">Surprises</h3>
+        <div class="chips" style="margin-bottom:6px">${chips}</div>
+        <div class="look-hint" id="surpriseHint">${SURPRISE_HINTS[look.surprises]}</div>
+        <button class="btn primary" id="previewSurprise" style="margin-top:16px;width:100%" ${look.scene === "off" ? "disabled" : ""}>
+          ${look.scene === "off" ? "Pick a scene to see surprises" : "Show me a surprise"}
+        </button>
+      </section>`;
+    paintSwatches(el);
+
+    el.querySelectorAll("[data-theme]").forEach((c) =>
       c.addEventListener("click", () => {
         if (look.theme === c.dataset.theme) return;
         look.theme = c.dataset.theme;
-        d.querySelectorAll("[data-theme]").forEach((x) => x.classList.toggle("on", x === c));
+        el.querySelectorAll("[data-theme]").forEach((x) => x.classList.toggle("on", x === c));
         app.paintAppearance(look);
         saveLook();
       })
     );
-    const slider = $("#warmth", d);
+    const slider = $("#warmth", el);
     slider.addEventListener("input", () => {   // live preview while dragging
       look.warmth = Number(slider.value);
-      $("#warmthValue", d).textContent = warmthLabel(look.warmth);
-      paintSwatches(d);
+      $("#warmthValue", el).textContent = warmthLabel(look.warmth);
+      paintSwatches(el);
       app.paintAppearance(look);
     });
     slider.addEventListener("change", saveLook); // save when you let go
-    $("#resetLook", d).addEventListener("click", () => {
-      ui.look = { theme: "olive", warmth: 0 };
+    el.querySelectorAll("[data-scene]").forEach((c) =>
+      c.addEventListener("click", () => {
+        if (look.scene === c.dataset.scene) return;
+        look.scene = c.dataset.scene;
+        saveLook();
+        renderAppearance(el);
+      })
+    );
+    el.querySelectorAll("[data-surprises]").forEach((c) =>
+      c.addEventListener("click", () => {
+        look.surprises = c.dataset.surprises;
+        el.querySelectorAll("[data-surprises]").forEach((x) => x.classList.toggle("on", x === c));
+        $("#surpriseHint", el).textContent = SURPRISE_HINTS[look.surprises];
+        saveLook();
+      })
+    );
+    $("#previewSurprise", el).addEventListener("click", () => {
+      close();
+      setTimeout(() => app.scenery?.play(), 500);
+    });
+    $("#resetLook", el).addEventListener("click", () => {
+      ui.look = { ...DEFAULT_LOOK };
       app.paintAppearance(ui.look);
       saveLook();
-      renderAppearance(d);
+      renderAppearance(el);
     });
   }
 
-  // each card previews its theme at the current warmth
-  function paintSwatches(d) {
-    d.querySelectorAll("[data-theme]").forEach((c) => {
+  // each color card previews its theme at the current warmth
+  function paintSwatches(el) {
+    el.querySelectorAll("[data-theme]").forEach((c) => {
       const p = app.themePalette(c.dataset.theme, ui.look.warmth);
       const sw = $(".theme-swatch", c);
       sw.style.setProperty("--sw", p["--slate"]);
@@ -374,6 +436,7 @@
   async function saveLook() {
     try {
       const r = await api("/api/settings/appearance", ui.look);
+      if (app.state) app.state.appearance = r.appearance;
       app.applyAppearance(r.appearance, true);
       app.holdAppearance();
     } catch (e) {
@@ -487,7 +550,7 @@
   }
 
   app.onState(() => {
-    if (!ui.open || !ui.unlocked) return;
+    if (!ui.open || !ui.unlocked || ui.screen !== "taps") return;
     renderTapList(false);
     const t = tap();
     if (ui.mode === "overview" && t && detailKey(t) !== ui.lastDetailKey) renderDetail();
