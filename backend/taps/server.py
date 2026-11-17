@@ -52,7 +52,8 @@ THEMES = ("olive", "plum", "charcoal")
 # Scenes are drawn by frontend/static/js/scenery.js; add new ones here too.
 SCENES = ("off", "auto", "spring", "summer", "fall", "winter", "gameday", "volleyball")
 SURPRISES = ("calm", "lively", "party")
-DEFAULT_APPEARANCE = {"theme": "olive", "warmth": 0, "scene": "auto", "surprises": "lively"}
+FIZZ = ("few", "some", "lots")
+DEFAULT_APPEARANCE = {"theme": "olive", "warmth": 0, "scene": "auto", "surprises": "lively", "fizz": "some"}
 
 
 class AppearanceBody(BaseModel):
@@ -60,6 +61,7 @@ class AppearanceBody(BaseModel):
     warmth: int = Field(0, ge=-5, le=5)                               # -5 coolest .. +5 warmest
     scene: str = "auto"                                               # one of SCENES; auto = season by the date
     surprises: Literal["calm", "lively", "party"] = "lively"          # how often critters show up
+    fizz: Literal["few", "some", "lots"] = "some"                     # how many bubbles rise in the kegs
 
     @field_validator("scene")
     @classmethod
@@ -140,7 +142,8 @@ def create_app(cfg: config_mod.Config | None = None) -> FastAPI:
         except (TypeError, ValueError):
             warmth = 0
         return {"theme": pick("theme", THEMES), "warmth": warmth,
-                "scene": pick("scene", SCENES), "surprises": pick("surprises", SURPRISES)}
+                "scene": pick("scene", SCENES), "surprises": pick("surprises", SURPRISES),
+                "fizz": pick("fizz", FIZZ)}
 
     def tap_state() -> list[dict]:
         rows = {r["tap_id"]: r for r in db.tap_rows()}

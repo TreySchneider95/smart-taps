@@ -318,7 +318,8 @@
   }
 
   // ---------- appearance (its own screen, from the header button) ----------
-  const DEFAULT_LOOK = { theme: "olive", warmth: 0, scene: "auto", surprises: "lively" };
+  const DEFAULT_LOOK = { theme: "olive", warmth: 0, scene: "auto", surprises: "lively", fizz: "some" };
+  const FIZZ_HINTS = { few: "Just the odd bubble.", some: "A few bubbles now and then.", lots: "Plenty of fizz, all the time." };
   const ICONS = {
     off: `<circle cx="16" cy="16" r="10" fill="none" stroke="currentColor" stroke-width="2"/><path d="M9 23L23 9" stroke="currentColor" stroke-width="2"/>`,
     auto: `<rect x="5" y="8" width="22" height="19" rx="3" fill="none" stroke="currentColor" stroke-width="2"/><path d="M5 14H27M11 5v5M21 5v5" stroke="currentColor" stroke-width="2" stroke-linecap="round"/><circle cx="16" cy="20.5" r="2.6" fill="currentColor"/>`,
@@ -352,6 +353,8 @@
       </button>`).join("");
     const chips = Object.keys(SURPRISE_HINTS)
       .map((k) => `<button class="chip ${look.surprises === k ? "on" : ""}" data-surprises="${k}">${cap(k)}</button>`).join("");
+    const fizzChips = Object.keys(FIZZ_HINTS)
+      .map((k) => `<button class="chip ${look.fizz === k ? "on" : ""}" data-fizz="${k}">${cap(k)}</button>`).join("");
 
     el.innerHTML = `
       <section class="look-section">
@@ -364,6 +367,9 @@
           <span>Warmer</span>
         </div>
         <div class="warmth" style="justify-content:center;margin-top:2px"><span class="warmth-value" id="warmthValue">${warmthLabel(look.warmth)}</span></div>
+        <h3 style="margin-top:20px">Keg bubbles</h3>
+        <div class="chips" style="margin-bottom:6px">${fizzChips}</div>
+        <div class="look-hint" id="fizzHint">${FIZZ_HINTS[look.fizz] || FIZZ_HINTS.some}</div>
         <button class="btn ghost" id="resetLook" style="margin-top:14px">Reset everything</button>
       </section>
       <section class="look-section">
@@ -401,6 +407,14 @@
         look.scene = c.dataset.scene;
         saveLook();
         renderAppearance(el);
+      })
+    );
+    el.querySelectorAll("[data-fizz]").forEach((c) =>
+      c.addEventListener("click", () => {
+        look.fizz = c.dataset.fizz;
+        el.querySelectorAll("[data-fizz]").forEach((x) => x.classList.toggle("on", x === c));
+        $("#fizzHint", el).textContent = FIZZ_HINTS[look.fizz];
+        saveLook();
       })
     );
     el.querySelectorAll("[data-surprises]").forEach((c) =>

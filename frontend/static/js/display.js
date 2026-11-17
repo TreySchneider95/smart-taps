@@ -113,18 +113,23 @@
   }
 
   // A handful of bubbles hugging the keg's sides, each with its own size, pace and start.
+  // how many bubbles, and how long each one's cycle is (Appearance → Keg bubbles)
+  const FIZZ = { few: { n: 3, d: [13, 22] }, some: { n: 6, d: [9, 16] }, lots: { n: 14, d: [5, 10] } };
+  const fizzLevel = () => (FIZZ[app.state?.appearance?.fizz] ? app.state.appearance.fizz : "some");
+
   function bubblesHTML() {
     const rand = (lo, hi) => lo + Math.random() * (hi - lo);
-    return Array.from({ length: 6 }, (_, i) => {
+    const { n, d: [lo, hi] } = FIZZ[fizzLevel()];
+    return Array.from({ length: n }, (_, i) => {
       const x = i % 2 ? rand(72, 88) : rand(5, 20); // alternate left / right edge (%)
-      const d = rand(9, 16);                         // full cycle in seconds (rising is ~40% of it)
+      const d = rand(lo, hi);                        // full cycle in seconds (rising is ~40% of it)
       return `<i style="--x:${x.toFixed(1)}%;--s:${rand(2.5, 5.5).toFixed(1)}px;--d:${d.toFixed(1)}s;--t:${(-rand(0, d)).toFixed(1)}s"></i>`;
     }).join("");
   }
 
   function columnKey(tap) {
     const b = tap.beer;
-    return [b?.id, b?.name, b?.style, b?.kind, b?.abv, b?.color_hex, b?.logo_url, !!tap.co2].join("|");
+    return [b?.id, b?.name, b?.style, b?.kind, b?.abv, b?.color_hex, b?.logo_url, !!tap.co2, fizzLevel()].join("|");
   }
 
   function columnHTML(tap) {
