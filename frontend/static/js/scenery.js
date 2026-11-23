@@ -882,20 +882,43 @@
     `<path d="M16 4H24V8L23 10V14Q31 19 31 27Q31 36 20 36Q9 36 9 27Q9 19 17 14V10L16 8Z" fill="rgba(235,225,225,.2)" stroke="${PARCH}"/><path d="M10 25Q20 21 30 25Q31 35 20 35Q9 35 10 25Z" fill="#5EE26A"/>`,
   ];
 
+  // an antique brass loupe with a turned mahogany handle. Rim and handle are drawn upright
+  // around the lens's center and rotated as one piece, so the handle always runs straight out of it.
+  const TR_LENS_CENTER = 8.4; // vh from the art's top-left corner to the center of the glass
+  function trLoupe() {
+    const stops = (list) => list.map(([o, c]) => `<stop offset="${o}" stop-color="${c}"/>`).join("");
+    const defs = `<defs>` +
+      `<linearGradient id="trBrass" x1="0" y1="0" x2="1" y2="1">${stops([[0, "#FBEDBE"], [0.3, "#D4AE63"], [0.55, "#7C5A25"], [0.75, "#E3C27A"], [1, "#5A3F18"]])}</linearGradient>` +
+      `<linearGradient id="trBrassBar">${stops([[0, "#5A3F18"], [0.3, "#F3DFA6"], [0.6, "#B98F45"], [1, "#4A3313"]])}</linearGradient>` +
+      `<linearGradient id="trWood">${stops([[0, "#210D07"], [0.3, "#7A3620"], [0.48, "#9A4F2E"], [0.75, "#4A1D10"], [1, "#180905"]])}</linearGradient>` +
+      `<radialGradient id="trGlass" cx=".42" cy=".38" r=".68"><stop offset="0" stop-color="#FFF8E1" stop-opacity=".05"/><stop offset=".7" stop-color="#C8D7E1" stop-opacity=".09"/><stop offset="1" stop-color="#0F141E" stop-opacity=".55"/></radialGradient>` +
+      `</defs>`;
+    const handle =
+      `<path d="M-7 58H7L9 71H-9Z" fill="url(#trBrassBar)"/><rect x="-12" y="71" width="24" height="6" rx="2" fill="url(#trBrassBar)"/><rect x="-10" y="77" width="20" height="3" fill="#3A280F"/>` +
+      `<path d="M-9 80C-14 90 -14 100 -10 108C-8 114 -8 118 -10 124C-14 136 -13 146 -9 152H9C13 146 14 136 10 124C8 118 8 114 10 108C14 100 14 90 9 80Z" fill="url(#trWood)"/>` +
+      `<rect x="-9.5" y="112" width="19" height="4.5" rx="1.2" fill="url(#trBrassBar)"/>` +
+      `<path d="M-6 86C-9 94 -9 100 -6.5 106M-6.5 124C-9 132 -9 140 -6 147" stroke="rgba(255,225,190,.35)" stroke-width="1.6" fill="none" stroke-linecap="round"/>` +
+      `<path d="M-10 152H10L8 159Q0 165 -8 159Z" fill="url(#trBrassBar)"/><circle cy="165" r="3.4" fill="url(#trBrassBar)"/>`;
+    const rim =
+      `<circle r="62" fill="none" stroke="rgba(0,0,0,.55)" stroke-width="4"/><circle r="50" fill="url(#trGlass)"/>` +
+      `<circle r="56" fill="none" stroke="url(#trBrass)" stroke-width="11"/><circle r="61.2" fill="none" stroke="#3F2B10" stroke-width="1.2"/><circle r="50.6" fill="none" stroke="#2E1F0B" stroke-width="1.6"/>` +
+      `<circle r="56" fill="none" stroke="#FCEFC6" stroke-width="2.4" stroke-linecap="round" stroke-dasharray="0 5.864" opacity=".85"/>`;
+    // the glare stays out of the rotation so the light keeps coming from the upper left
+    const glare = `<path d="M-41 -10A42 42 0 0 1 -10 -41A54 54 0 0 0 -41 -10Z" fill="rgba(255,255,255,.62)"/><circle cx="-43" cy="3" r="2.4" fill="rgba(255,255,255,.55)"/>` +
+      `<path d="M37 21A42 42 0 0 1 21 37" stroke="rgba(255,255,255,.24)" stroke-width="2.4" stroke-linecap="round" fill="none"/>`;
+    return svgH("0 0 200 210", 25.2, `${defs}<g transform="translate(70 70) rotate(-40)">${handle}${rim}</g><g transform="translate(70 70)">${glare}</g>`);
+  }
+
   // a magnifying glass drifts room to room, turning up a clue at each stop
   function trMagnifier() {
     const T = 15;
     const spots = TR_GAPS.map((x) => [x, rand(52, 60)]); // below the portraits, above the candles
     const clues = [...TR_CLUES].sort(() => Math.random() - 0.5).slice(0, 3);
     const clueHTML = spots.map(([x, y], i) => `<div class="tr-clue" style="left:${f1(x)}vw;top:${f1(y)}vh">${svgH("0 0 40 40", 8, clues[i])}</div>`).join("");
-    const lens = svgH("0 0 100 140", 21,
-      `<path d="M69 72L94 132" stroke="#3B2413" stroke-width="11" stroke-linecap="round"/><path d="M69 72L94 132" stroke="${GILT}" stroke-width="4" stroke-linecap="round"/>` +
-      `<circle cx="46" cy="46" r="39" fill="rgba(235,225,190,.1)" stroke="${GILT}" stroke-width="7"/><circle cx="46" cy="46" r="34" fill="none" stroke="rgba(255,255,255,.3)"/>` +
-      `<path d="M23 34Q30 18 48 16" stroke="rgba(255,255,255,.55)" stroke-width="3.5" stroke-linecap="round" fill="none"/>`);
-    const box = spawn(`${clueHTML}<div class="tr-lens"><div class="tr-scan">${lens}</div></div>`, "sc-burst", "", T);
+    const box = spawn(`${clueHTML}<div class="tr-lens"><i class="tr-lens-glow"></i><div class="tr-scan">${trLoupe()}</div></div>`, "sc-burst", "", T);
     if (!box) return;
-    // the lens's center (46, 46 of 100 x 140) lands on each clue
-    const pos = (x, y) => `translate(calc(${f1(x)}vw - 6.9vh), calc(${f1(y)}vh - 6.9vh))`;
+    // the center of the glass lands on each clue
+    const pos = (x, y) => `translate(calc(${f1(x)}vw - ${TR_LENS_CENTER}vh), calc(${f1(y)}vh - ${TR_LENS_CENTER}vh))`;
     const beats = [[0.2, 0.33], [0.45, 0.58], [0.7, 0.84]];
     const frames = [{ transform: pos(-14, 24), offset: 0 }];
     spots.forEach(([x, y], i) => frames.push({ transform: pos(x, y), offset: beats[i][0], easing: "ease-in-out" }, { transform: pos(x, y), offset: beats[i][1], easing: "ease-in-out" }));
@@ -1002,8 +1025,31 @@
       { transform: `translateX(${d})`, opacity: 1, offset: 0.78 }, { transform: "translateX(0)", opacity: 0, offset: 0.92 }, { transform: "translateX(0)", opacity: 0, offset: 1 }], T);
   }
 
-  const RAVEN = `<path d="M22 9Q12 0 1 4Q7 7 7 11Q12 10 15 14Q19 11 22 12Q25 11 29 14Q32 10 37 11Q37 7 43 4Q32 0 22 9Z" fill="#08050A" stroke="${RIM}" stroke-width=".6"/>` +
-    `<ellipse cx="22" cy="11" rx="3.4" ry="5" fill="#08050A"/><path d="M22 15L20 21H24Z" fill="#08050A"/><circle cx="23.2" cy="8.6" r=".7" fill="#FF4B3E"/>`;
+  // deep purple with a lighter edge so they show up against the black wall
+  const TR_BAT = `<path d="M22 9Q12 0 1 4Q7 7 7 11Q12 10 15 14Q19 11 22 12Q25 11 29 14Q32 10 37 11Q37 7 43 4Q32 0 22 9Z" fill="#4A2388" stroke="#A67BE0" stroke-width=".7"/>` +
+    `<ellipse cx="22" cy="11" rx="3.4" ry="5" fill="#36176A" stroke="#A67BE0" stroke-width=".5"/><path d="M22 15L20 21H24Z" fill="#36176A"/><circle cx="20.8" cy="8.6" r=".8" fill="#FF4B3E"/><circle cx="23.2" cy="8.6" r=".8" fill="#FF4B3E"/>`;
+
+  // blood seeps over the curtain and runs down the wall in fits and starts, behind the taps.
+  // The long runs stay in the gaps between taps so names and numbers stay easy to read.
+  function trBlood() {
+    const T = 17, n = 24, runs = [];
+    let drips = "";
+    for (let i = 0; i < n; i++) {
+      const x = (i + 0.5) * (100 / n) + rand(-1.4, 1.4);
+      const inGap = x < 3 || x > 97 || TR_GAPS.some((g) => Math.abs(x - g) < 6.5);
+      const len = inGap ? rand(42, 86) : rand(11, 33), delay = rand(0.3, 2.6), bleed = rand(6, 11);
+      drips += `<i class="tr-bleed" style="left:${f1(x)}vw;--w:${f1(rand(0.6, 1.6))}vh;--len:${f1(len)}vh;--bd:${f1(bleed)}s;animation-delay:${f1(delay)}s"></i>`;
+      if (inGap) runs.push({ x, len, at: delay + bleed });
+    }
+    // a few of the long runs let go of a drop that splats on the tablecloth
+    const drops = runs.sort(() => Math.random() - 0.5).slice(0, 4).map(({ x, len, at }) =>
+      `<i class="tr-bdrop" style="left:${f1(x)}vw;top:${f1(len)}vh;--fall:${f1(88.4 - len)}vh;animation-delay:${f1(at)}s"></i>` +
+      `<i class="tr-splat" style="left:${f1(x)}vw;animation-delay:${f1(at + 0.55)}s"></i>`).join("");
+    let edge = "M0 0H100V5";
+    for (let i = 10; i > 0; i--) edge += `Q${i * 10 - 5} ${f1(rand(6.5, 10))} ${(i - 1) * 10} ${f1(rand(3.5, 6))}`;
+    const top = `<svg class="tr-blood-top" viewBox="0 0 100 10" preserveAspectRatio="none"><path d="${edge}Z" fill="#8E0E15"/></svg>`;
+    spawn(`${drips}${drops}${top}`, "sc-burst tr-blood", `--dur:${T}s`, T);
+  }
 
   // two glasses clink, with varying degrees of sincerity
   function trToast() {
@@ -1026,8 +1072,9 @@
     letter: { w: 1.6, run: trLetter },
     accuse: { w: 1.6, run: trAccuse },
     toast: { w: 1.5, run: trToast },
-    ravens: { w: 1.3, run: () => cross(flock(RAVEN, irand(3, 5), 7, 44), { y: rand(12, 24), dur: rand(9, 12), bob: "sc-flutter" }) },
+    nightbats: { w: 1.3, run: () => cross(flock(TR_BAT, irand(3, 5), 8, 44), { y: rand(12, 24), dur: rand(9, 12), bob: "sc-flutter" }) },
     blackout: { w: 1.2, run: trBlackout },
+    blood: { w: 2, run: trBlood },
   };
 
   // scene list for the console (seasons rotate under "auto"; the rest are themes)
