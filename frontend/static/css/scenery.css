@@ -556,59 +556,46 @@ body.console-open #scenery { display: none; }   /* nothing to see under the cons
 @keyframes tr-splat { from { opacity: 0; transform: scale(.2); } to { opacity: 1; transform: scale(1); } }
 
 /* ============ Golden birthday (27 on the 27th) ============ */
-/* The console stays dark espresso with gold accents. !important beats the inline colors display.js sets. */
+/* Black and gold, board and console alike. !important beats the inline colors display.js sets. */
 :root[data-scene="golden"] {
-  --slate: #2A1C07 !important; --slate-deep: #1E1405 !important; --board-hi: #3F2A0A !important;
-  --panel: #38260A !important; --panel-hi: #49320D !important;
-  --keg-body: #241603 !important; --keg-edge: #120B02 !important;
+  --slate: #0A0806 !important; --slate-deep: #060504 !important; --board-hi: #211A0C !important;
+  --panel: #1E180C !important; --panel-hi: #2C2311 !important;
+  --keg-body: #14100A !important; --keg-edge: #7A5D24 !important;
   --chalk: #FFF6DC; --chalk-dim: #E6D2A2; --chalk-faint: #A98F5C;
   --silver: #F5C63C; --silver-hi: #FFF2BE; --silver-deep: #A86F0A;
   --line: rgba(245, 198, 60, .26); --line-strong: rgba(245, 198, 60, .55);
 }
-/* the board itself sits on gold, so its text flips to dark espresso */
-:root[data-scene="golden"] .board__header, :root[data-scene="golden"] .taps {
-  --chalk: #201302; --chalk-dim: #352204; --chalk-faint: #553A0B; --copper: #6B1206; --copper-deep: #470B03;
-}
 :root[data-scene="golden"] .sc-ambient { opacity: 1; }
-:root[data-scene="golden"] .board__header { border-bottom-color: rgba(46, 28, 3, .55); }
-:root[data-scene="golden"] .tap:not(:last-child) { border-right-color: rgba(46, 28, 3, .3); }
-:root[data-scene="golden"] .brand { color: #201302; }
-:root[data-scene="golden"] .gear { opacity: .7; }
-:root[data-scene="golden"] .offline { color: #201302; }
-:root[data-scene="golden"] .tap.pouring .tap__amt { color: #5E1408; }
-:root[data-scene="golden"] .tap__name span, :root[data-scene="golden"] .tap__sub,
-:root[data-scene="golden"] .tap__pct, :root[data-scene="golden"] .tap__amt {
-  text-shadow: 0 1px 0 rgba(255, 246, 205, .7), 0 0 8px rgba(255, 235, 165, .6);
-}
-:root[data-scene="golden"] .taps .medallion { box-shadow: 0 0 0 .35vh #2E1C03, 0 .5vh 1vh rgba(46, 28, 3, .5), inset 0 1px 1px rgba(255, 255, 255, .5); }
-:root[data-scene="golden"] .freezer {
-  --chalk: #FFF6DC; --chalk-dim: #E6D2A2; --copper: #FFAA7A; --board-hi: #4A3109; --slate-deep: #241603; border-color: #2E1C03;
-}
+:root[data-scene="golden"] .board__header { border-bottom-color: rgba(245, 198, 60, .5); }
+:root[data-scene="golden"] .tap:not(:last-child) { border-right-color: rgba(245, 198, 60, .18); }
+:root[data-scene="golden"] .freezer { border-color: rgba(245, 198, 60, .6); }
 
 /* the room */
 .au-wall {
   position: absolute; inset: 0;
   background:
-    radial-gradient(ellipse 65% 45% at 50% 36%, rgba(255, 240, 170, .55), transparent 70%),
-    repeating-linear-gradient(115deg, rgba(255, 246, 196, .12) 0 1.2vw, transparent 1.2vw 3.4vw, rgba(120, 76, 8, .08) 3.4vw 4.2vw, transparent 4.2vw 6vw),
-    linear-gradient(180deg, #EBC95F, #DFB548 45%, #CC9C33 78%, #B98A28);
+    radial-gradient(ellipse 62% 42% at 50% 100%, rgba(212, 160, 40, .2), transparent 72%),
+    radial-gradient(ellipse 50% 32% at 50% 8%, rgba(212, 160, 40, .08), transparent 72%),
+    #070605;
 }
 .au-sheen {
   position: absolute; top: -20vh; bottom: -20vh; left: -45vw; width: 34vw;
-  background: linear-gradient(90deg, transparent, rgba(255, 252, 225, .34), transparent);
+  background: linear-gradient(90deg, transparent, rgba(255, 222, 130, .05), transparent);
   will-change: transform; animation: au-sheen 13s ease-in-out infinite;
 }
 @keyframes au-sheen { 0% { transform: translateX(0) skewX(-18deg); } 55%, 100% { transform: translateX(170vw) skewX(-18deg); } }
 .au-twinkle { position: absolute; animation: au-twinkle var(--tw) ease-in-out var(--tdl) infinite alternate; }
 @keyframes au-twinkle { from { opacity: .1; transform: scale(.5) rotate(0); } to { opacity: 1; transform: scale(1) rotate(35deg); } }
-.au-fleck { display: block; width: var(--fs); height: calc(var(--fs) * 1.3); background: var(--c); }
+.au-fleck { display: block; width: var(--fs); height: var(--fs); border-radius: 12%; background: var(--c); }
+.au-fleck.shine { box-shadow: 0 0 .6vh .08vh var(--c); animation: au-shine var(--sh) ease-in-out var(--shd) infinite alternate; }
+@keyframes au-shine { from { opacity: .35; } to { opacity: 1; } }
 .au-cord { position: absolute; top: 0; left: 25.85vw; width: 48.3vw; height: 4vh; }
 .au-flag { position: absolute; }
 .au-num { position: absolute; top: 11vh; animation: sc-bob var(--sd) ease-in-out infinite alternate; --amp: .9vh; }
 .au-table {
   position: absolute; left: 0; right: 0; bottom: 0; height: 9.6vh;
   background:
-    linear-gradient(180deg, #2E1C03 0 .35vh, transparent .35vh),
+    linear-gradient(180deg, #F5C63C 0 .3vh, transparent .3vh),
     radial-gradient(circle, rgba(255, 228, 130, .55) 0 .16vh, transparent .2vh) 0 0 / 1.1vh 1.1vh,
     linear-gradient(180deg, #9A680F, #6E4A0C 55%, #4C3208);
 }
@@ -636,10 +623,10 @@ body.console-open #scenery { display: none; }   /* nothing to see under the cons
 .au-flip { animation: au-flip var(--fl) linear infinite; }
 @keyframes au-flip { to { transform: rotateY(360deg); } }
 
-/* speech pills and the note: always espresso, so words never sit gold on gold */
+/* speech pills: solid gold with dark lettering */
 .au-say {
-  position: absolute; padding: .9vh 2.2vh; border-radius: 999px; background: #241603; color: #FFD84D; border: .25vh solid #FFD84D;
-  font: 800 4.2vh/1 var(--cond); letter-spacing: .1vh; white-space: nowrap; box-shadow: 0 .5vh 1.2vh rgba(46, 28, 3, .55);
+  position: absolute; padding: .9vh 2.2vh; border-radius: 999px; background: linear-gradient(160deg, #FFF0B0, #F5C63C 55%, #D49A22); color: #1A1003; border: .2vh solid #FFFBE3;
+  font: 800 4.2vh/1 var(--cond); letter-spacing: .1vh; white-space: nowrap; box-shadow: 0 .5vh 1.6vh rgba(0, 0, 0, .7);
   animation: au-say var(--dur) cubic-bezier(.3, 1.4, .5, 1) both;
 }
 @keyframes au-say {
@@ -650,15 +637,15 @@ body.console-open #scenery { display: none; }   /* nothing to see under the cons
 .au-card-box { top: 41vh; width: 14vw; margin-left: -7vw; animation: tr-note var(--dur) cubic-bezier(.3, 1.2, .5, 1) both; }
 .au-card {
   min-height: 24vh; padding: 2vh 1vw; display: flex; flex-direction: column; align-items: center; justify-content: center; text-align: center;
-  background: linear-gradient(160deg, #38260A, #1E1405); border: .4vh solid #F5C63C; outline: .15vh solid #2E1C03; outline-offset: .2vh; border-radius: .8vh;
-  box-shadow: 0 1vh 2.2vh rgba(46, 28, 3, .6);
+  background: linear-gradient(160deg, #2C2311, #100C06); border: .4vh solid #F5C63C; outline: .15vh solid #A86F0A; outline-offset: .3vh; border-radius: .8vh;
+  box-shadow: 0 1vh 2.2vh rgba(0, 0, 0, .7);
 }
 .au-card small { font: 600 1.25vw/1.2 var(--cond); letter-spacing: .08vw; text-transform: uppercase; color: #E6D2A2; }
 .au-card p { margin: 1.2vh 0 0; font: 800 2.7vw/1.05 var(--cond); color: #FFD84D; }
 
 /* make a wish */
 .au-smoke {
-  position: absolute; width: 1.5vh; height: 1.5vh; margin-left: -.75vh; border-radius: 50%; background: rgba(70, 58, 44, .75);
+  position: absolute; width: 1.5vh; height: 1.5vh; margin-left: -.75vh; border-radius: 50%; background: rgba(205, 195, 178, .6);
   animation: au-smoke 2.2s ease-out both;
 }
 @keyframes au-smoke { 0% { opacity: .9; transform: translate(0, 0) scale(.5); } 100% { opacity: 0; transform: translate(1.6vh, -11vh) scale(2.4); } }
@@ -713,7 +700,7 @@ body.console-open #scenery { display: none; }   /* nothing to see under the cons
   100% { opacity: 0; transform: translateY(-7vh) rotate(8deg); }
 }
 .au-tag {
-  position: absolute; top: 12vh; padding: .7vh 1.3vh; border-radius: 999px; background: #241603; color: #FFD84D; border: .2vh solid #FFD84D;
+  position: absolute; top: 12vh; padding: .7vh 1.3vh; border-radius: 999px; background: linear-gradient(160deg, #FFF0B0, #F5C63C 55%, #D49A22); color: #1A1003; border: .2vh solid #FFFBE3;
   font: 800 2.7vh/1 var(--cond); white-space: nowrap; animation: au-tag var(--dur) ease-out both;
 }
 @keyframes au-tag { 0%, 15% { opacity: 0; transform: scale(.6); } 21%, 88% { opacity: 1; transform: scale(1); } 100% { opacity: 0; } }
@@ -724,12 +711,12 @@ body.console-open #scenery { display: none; }   /* nothing to see under the cons
 /* disco ball */
 .au-ball { position: absolute; top: 13vh; margin-left: -8.5vh; animation: au-ball 12s cubic-bezier(.3, 1, .4, 1) both; }
 @keyframes au-ball { 0% { transform: translateY(-40vh); } 18%, 82% { transform: translateY(0); } 100% { transform: translateY(-40vh); } }
-.au-rope { position: absolute; left: 50%; bottom: 100%; width: .3vh; margin-left: -.15vh; height: 60vh; background: #2E1C03; }
+.au-rope { position: absolute; left: 50%; bottom: 100%; width: .3vh; margin-left: -.15vh; height: 60vh; background: #C9A24A; }
 .au-facets { animation: au-facets 1.2s steps(6) infinite; }
 @keyframes au-facets { to { transform: translateX(16px); } }
 .au-spot {
   position: absolute; width: 2.6vh; height: 2.6vh; border-radius: 50%;
-  background: radial-gradient(circle, #FFFFFF 38%, rgba(255, 255, 255, .35) 62%, transparent 72%);
+  background: radial-gradient(circle, #FFE9A8 38%, rgba(255, 216, 77, .4) 62%, transparent 72%);
   animation: au-spot var(--sd) ease-in-out var(--sdl) infinite alternate;
 }
 @keyframes au-spot { from { transform: translate(-7vw, -4vh); } to { transform: translate(7vw, 4vh); } }

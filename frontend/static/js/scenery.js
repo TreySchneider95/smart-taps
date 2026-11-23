@@ -1078,10 +1078,12 @@
   };
 
   // ================================================================ golden birthday (27 on the 27th)
-  // Gold on gold stays readable three ways: bright foil over a deeper wall, a dark bronze
-  // outline on every prop, and espresso behind anything with words on it.
+  // A black room, gold everything, and gold glitter always falling, like the winter snow.
+  // `ink` is a bronze edge (and string color) that still shows on black; `coco` is the
+  // near-black for lettering and details drawn on top of gold.
   // The board's own colors switch too: see :root[data-scene="golden"] in scenery.css.
-  const AU = { hi: "#FFFBE3", foil: "#FFD84D", mid: "#F0B31C", deep: "#A86F0A", ink: "#2E1C03", coco: "#241603" };
+  const AU = { hi: "#FFFBE3", foil: "#FFD84D", mid: "#F0B31C", deep: "#A86F0A", ink: "#9A7220", coco: "#1A1003" };
+  const AU_GLITTER = ["#FFFBE3", "#FFF3B0", "#FFE27A", "#FFD84D", "#F0B31C", "#D49A22"];
   const AU_TONES = ["auFoil", "auFoil", "auChamp", "auBronze"];
   const auGrad = (id, list) => `<linearGradient id="${id}" x1="0" y1="0" x2="1" y2="1">${list.map(([o, c]) => `<stop offset="${o}" stop-color="${c}"/>`).join("")}</linearGradient>`;
   const AU_DEFS = `<svg width="0" height="0" style="position:absolute"><defs>` +
@@ -1142,7 +1144,7 @@
     const flames = AU_CANDLES.map((x) => trFlame(x, ((110 - 13) / 110) * 100)).join("");
     return `<div class="au-cake">${svgH("0 0 100 110", 28,
       `${candles}${tier(34, 24, 32, 21, "auBronze")}${tier(24, 45, 52, 25, "auFoil")}${tier(14, 70, 72, 30, "auBronze")}` +
-      `<text x="50" y="94" ${AU_TEXT} font-size="17" fill="${AU.hi}" stroke="${AU.ink}" stroke-width="2.4" paint-order="stroke">27</text>${pearls}` +
+      `<text x="50" y="94" ${AU_TEXT} font-size="17" fill="${AU.hi}" stroke="${AU.coco}" stroke-width="2.4" paint-order="stroke">27</text>${pearls}` +
       `<path d="M8 100H92L86 105H58L62 110H38L42 105H14Z" fill="${auFill()}" stroke="${AU.ink}" stroke-width="1"/>`)}${flames}</div>`;
   }
 
@@ -1158,22 +1160,23 @@
     const flags = [...text].map((ch, i) => {
       if (ch === " ") return "";
       const t = (i + 0.5) / text.length;
-      const art = svgW("0 0 30 40", 2.2, `<path d="M1 1H29L15 39Z" fill="${AU.coco}" stroke="${AU.foil}" stroke-width="1.2"/><text x="15" y="20" ${AU_TEXT} font-size="18" fill="${AU.foil}">${ch}</text>`);
+      const art = svgW("0 0 30 40", 2.2, `<path d="M1 1H29L15 39Z" fill="${auFill()}" stroke="${AU.ink}" stroke-width="1"/><text x="15" y="20" ${AU_TEXT} font-size="18" fill="${AU.coco}">${ch}</text>`);
       return `<div class="au-flag" style="left:${f1(25.85 + i * 2.3)}vw;top:${f1(0.3 + 6.4 * t * (1 - t))}vh">${art}</div>`;
     }).join("");
     const cord = `<svg class="au-cord" viewBox="0 0 100 4" preserveAspectRatio="none"><path d="M0 .3Q50 3.5 100 .3" fill="none" stroke="${AU.ink}" stroke-width="1.5" vector-effect="non-scaling-stroke"/></svg>`;
     let stars = "";
-    for (let i = 0; i < 16; i++) {
+    for (let i = 0; i < 8; i++) {
       const d = rand(2.2, 4.6);
       stars += `<div class="au-twinkle" style="left:${f1(rand(2, 98))}vw;top:${f1(rand(12, 80))}vh;--tw:${f1(d)}s;--tdl:${f1(-rand(0, d))}s">${svgH("0 0 20 20", rand(1.6, 3.2), auStarPath(AU.hi))}</div>`;
     }
-    const glitter = fallers(16, () => `<i class="au-fleck" style="--fs:${f1(rand(0.5, 1))}vh;--c:${pick([AU.hi, "#FFF3B0", AU.deep, "#5F3D06"])}"></i>`, { dur: [11, 19], drift: 2.5 });
+    // always falling; every third fleck catches the light
+    const glitter = fallers(60, (i) => `<i class="au-fleck${i % 3 ? "" : " shine"}" style="--fs:${f1(rand(0.45, 1.15))}vh;--c:${pick(AU_GLITTER)};--sh:${f1(rand(0.9, 2.2))}s;--shd:${f1(-rand(0, 2))}s"></i>`, { dur: [9, 18], drift: 2.5 });
     // sized to sit between the middle two medallions and above the tap names
     const digits = `<div class="au-num" style="left:calc(50vw - 11.6vh);--sd:3.4s">${auDigit(2, 20)}</div><div class="au-num" style="left:calc(50vw - .9vh);--sd:4.1s">${auDigit(7, 20)}</div>`;
     const places = [[4.6, auBottle(13) + auCoupe(7)], [20, auCoupe(7)], [30, auCoupe(7)], [70, auCoupe(7)], [80, auCoupe(7)], [95.4, auCoupe(7) + auBottle(13)]]
       .map(([x, art]) => `<div class="au-place" style="left:${x}vw">${art}</div>`).join("");
-    return `${AU_DEFS}<div class="au-wall"></div><div class="au-sheen"></div>${stars}${glitter}${cord}${flags}${digits}` +
-      `<div class="au-table"></div>${auCluster(25)}${auCluster(75)}${places}${auCake()}`;
+    return `${AU_DEFS}<div class="au-wall"></div><div class="au-sheen"></div>${stars}${cord}${flags}${digits}` +
+      `<div class="au-table"></div>${auCluster(25)}${auCluster(75)}${places}${auCake()}${glitter}`; // glitter last, so it falls in front of the props
   }
   AMBIENT.golden = auRoom;
 
@@ -1197,9 +1200,9 @@
     spawn(s, "sc-burst", "", 18);
   }
 
-  // confetti cannons from both corners; the darker flecks are what make it read on gold
+  // gold confetti cannons from both corners
   function auConfetti() {
-    const colors = [AU.hi, AU.foil, AU.mid, AU.deep, "#5F3D06", AU.ink];
+    const colors = [...AU_GLITTER, AU.deep];
     let s = "";
     for (const side of [0, 1]) for (let i = 0; i < 38; i++) {
       const sign = side ? -1 : 1, dx = rand(12, 64) * sign;
@@ -1296,7 +1299,7 @@
 
   // a golden retriever in a party hat, naturally
   function auDog() {
-    const coat = "#E7A93F", shade = "#B9781F", lite = "#F6CF83", line = `stroke="${AU.ink}" stroke-width="1.2"`;
+    const coat = "#E7A93F", shade = "#B9781F", lite = "#F6CF83", line = `stroke="${AU.coco}" stroke-width="1.2"`;
     const leg = (x, cls, c) => `<rect class="sc-leg ${cls}" x="${x}" y="56" width="8" height="30" rx="3.5" fill="${c}" ${line}/>`;
     return svgH("0 -74 124 166", 24,
       `<path d="M82 -24C76 -6 90 16 86 42" stroke="${AU.ink}" stroke-width="1" fill="none"/><g transform="translate(62 -74)">${auHead("auFoil")}</g>` +
@@ -1306,7 +1309,7 @@
       `${leg(40, "a", coat)}${leg(62, "b", coat)}` +
       `<path d="M78 42C80 29 86 22 96 22C106 22 113 30 114 37C114 43 108 47 100 47C94 51 88 54 81 54Z" fill="${coat}" ${line}/>` +
       `<path d="M104 45Q109 51 104 54Q99 52 100 46Z" fill="#E8637A" ${line}/><path d="M92 25C85 27 83 39 88 46C95 44 97 33 95 25Z" fill="${shade}" ${line}/>` +
-      `<ellipse cx="113" cy="36.5" rx="3.2" ry="2.5" fill="${AU.coco}"/><circle cx="102" cy="30" r="2" fill="${AU.coco}"/><path d="M104 44Q110 44 113 39" stroke="${AU.ink}" fill="none"/>` +
+      `<ellipse cx="113" cy="36.5" rx="3.2" ry="2.5" fill="${AU.coco}"/><circle cx="102" cy="30" r="2" fill="${AU.coco}"/><path d="M104 44Q110 44 113 39" stroke="${AU.coco}" fill="none"/>` +
       `<path d="M80 40Q86 48 92 51" stroke="${AU.coco}" stroke-width="4.4" fill="none"/><circle cx="90" cy="54" r="3" fill="${AU.foil}" stroke="${AU.ink}" stroke-width=".8"/>` +
       `<path d="M92 24L99 3L107 25Z" fill="${auFill("auBronze")}" ${line}/><path d="M95.6 14L103.6 15.4M93.8 20L105.6 21.6" stroke="${AU.hi}" stroke-width="1.5"/><circle cx="99" cy="3" r="3" fill="${AU.hi}" ${line}/>`);
   }
@@ -1319,7 +1322,7 @@
       for (let c = -2; c < 10; c++) rows += `<rect x="${c * 8}" y="${r * 6}" width="7.2" height="5.2" fill="${c % 2 ? a : b}"/>`;
     }
     const ball = svgH("0 0 60 60", 17,
-      `<clipPath id="auBallClip"><circle cx="30" cy="30" r="28"/></clipPath><circle cx="30" cy="30" r="28" fill="${AU.ink}"/>` +
+      `<clipPath id="auBallClip"><circle cx="30" cy="30" r="28"/></clipPath><circle cx="30" cy="30" r="28" fill="${AU.coco}"/>` +
       `<g clip-path="url(#auBallClip)"><g class="au-facets">${rows}</g></g><circle cx="30" cy="30" r="28" fill="none" stroke="${AU.ink}" stroke-width="2"/>` +
       `<ellipse cx="20" cy="17" rx="7" ry="4.6" fill="#fff" opacity=".75" transform="rotate(-30 20 17)"/>`);
     let spots = "";
