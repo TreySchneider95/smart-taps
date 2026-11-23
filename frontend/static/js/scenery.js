@@ -1,5 +1,5 @@
 /* Scenery behind the tap board: a small ambient scene per season (grass, snow, falling
-   leaves…) or theme (Husker football and volleyball, Traitors party), plus surprises that wander through now and then.
+   leaves…) or theme (Husker football and volleyball, Traitors party, golden birthday), plus surprises that wander through now and then.
    To add a scene: an AMBIENT entry, a SURPRISES entry, a CATALOG row, and its key in
    SCENES in backend/taps/server.py.
 
@@ -1077,10 +1077,283 @@
     blood: { w: 2, run: trBlood },
   };
 
+  // ================================================================ golden birthday (27 on the 27th)
+  // Gold on gold stays readable three ways: bright foil over a deeper wall, a dark bronze
+  // outline on every prop, and espresso behind anything with words on it.
+  // The board's own colors switch too: see :root[data-scene="golden"] in scenery.css.
+  const AU = { hi: "#FFFBE3", foil: "#FFD84D", mid: "#F0B31C", deep: "#A86F0A", ink: "#2E1C03", coco: "#241603" };
+  const AU_TONES = ["auFoil", "auFoil", "auChamp", "auBronze"];
+  const auGrad = (id, list) => `<linearGradient id="${id}" x1="0" y1="0" x2="1" y2="1">${list.map(([o, c]) => `<stop offset="${o}" stop-color="${c}"/>`).join("")}</linearGradient>`;
+  const AU_DEFS = `<svg width="0" height="0" style="position:absolute"><defs>` +
+    auGrad("auFoil", [[0, "#FFF6C2"], [0.28, "#FFD84D"], [0.58, "#EFAE17"], [0.8, "#FFE27A"], [1, "#B8780B"]]) +
+    auGrad("auChamp", [[0, "#FFFDF0"], [0.45, "#FBE9B0"], [0.8, "#E9C878"], [1, "#C59A45"]]) +
+    auGrad("auBronze", [[0, "#D8A23A"], [0.45, "#9A640C"], [0.8, "#C98C1E"], [1, "#5F3D06"]]) +
+    `</defs></svg>`;
+  const auFill = (id = "auFoil") => `url(#${id}) ${AU.mid}`; // the plain color is a fallback
+  const AU_TEXT = `text-anchor="middle" font-family="Barlow Condensed, sans-serif" font-weight="800"`;
+  const auStarPath = (fill) => `<path d="M10 0Q11 8 20 10Q11 12 10 20Q9 12 0 10Q9 8 10 0Z" fill="${fill}" stroke="${AU.ink}" stroke-width=".7"/>`;
+
+  const auHead = (tone) =>
+    `<path d="M20 2C9 2 3 11 3 21C3 33 13 42 18 46H22C27 42 37 33 37 21C37 11 31 2 20 2Z" fill="${auFill(tone)}" stroke="${AU.ink}" stroke-width="1.5"/>` +
+    `<path d="M30 10Q35 20 29 33" stroke="${AU.deep}" stroke-width="1.6" fill="none" stroke-linecap="round" opacity=".7"/><ellipse cx="13" cy="15" rx="3.6" ry="7" fill="${AU.hi}" opacity=".92" transform="rotate(22 13 15)"/>` +
+    `<path d="M17.5 46H22.5L24 50H16Z" fill="${AU.deep}" stroke="${AU.ink}" stroke-width=".8"/>`;
+  // `head` is the balloon's height in vh; `len` is the string, in the art's own units
+  function auBalloon(head, len = 40, tone = pick(AU_TONES)) {
+    return svgH(`0 0 40 ${50 + len}`, (head * (50 + len)) / 50,
+      `<path d="M20 50C15 ${f1(50 + len * 0.33)} 25 ${f1(50 + len * 0.66)} 20 ${50 + len}" stroke="${AU.ink}" stroke-width=".9" fill="none"/>${auHead(tone)}`);
+  }
+  // a big foil number balloon
+  function auDigit(d, h) {
+    const t = (attrs) => `<text x="35" y="86" ${AU_TEXT} font-size="100" ${attrs}>${d}</text>`;
+    return svgH("0 0 70 112", h,
+      `<path d="M35 88Q30 98 37 104T34 112" stroke="${AU.ink}" fill="none"/>` +
+      t(`fill="none" stroke="${AU.ink}" stroke-width="10" stroke-linejoin="round"`) +
+      t(`fill="${auFill()}" stroke="${auFill()}" stroke-width="5" stroke-linejoin="round"`) +
+      t(`fill="none" stroke="rgba(255,255,255,.8)" stroke-width="1.2" transform="translate(-1.4 -1.6)"`));
+  }
+  function auGift(h, tone = "auFoil", ribbon = AU.coco) {
+    return svgH("0 0 50 46", h,
+      `<rect x="4" y="16" width="42" height="29" rx="1.5" fill="${auFill(tone)}" stroke="${AU.ink}" stroke-width="1.2"/><rect x="22" y="16" width="6" height="29" fill="${ribbon}"/>` +
+      `<g class="au-lid"><rect x="1" y="9" width="48" height="9" rx="1.5" fill="${auFill(tone)}" stroke="${AU.ink}" stroke-width="1.2"/><rect x="22" y="9" width="6" height="9" fill="${ribbon}"/>` +
+      `<path d="M25 9C16 -1 7 2 12 7C15 10 21 9 25 9C29 9 35 10 38 7C43 2 34 -1 25 9Z" fill="${ribbon}" stroke="${AU.foil}" stroke-width=".7"/></g>`);
+  }
+  const auBottle = (h) => svgH("0 0 20 64", h,
+    `<path d="M7 1H13V18Q18 22 18 30V60Q18 63 16 63H4Q2 63 2 60V30Q2 22 7 18Z" fill="#2A1B05" stroke="${AU.ink}"/>` +
+    `<path d="M6.6 1H13.4V17Q16 19 17 23H3Q4 19 6.6 17Z" fill="${auFill()}" stroke="${AU.ink}" stroke-width=".5"/>` +
+    `<rect x="3" y="34" width="14" height="17" fill="${auFill("auChamp")}"/><text x="10" y="47" ${AU_TEXT} font-size="11" fill="${AU.coco}">27</text>`);
+  const auCoupe = (h) => svgH("0 0 30 40", h,
+    `<path d="M2 6Q4 20 15 20Q26 20 28 6Z" fill="rgba(255,255,255,.35)" stroke="${AU.ink}" stroke-width="1"/><path d="M3.6 10Q6 19 15 19Q24 19 26.4 10Z" fill="#FFE27A"/>` +
+    `<circle cx="11" cy="14" r=".9" fill="#fff"/><circle cx="18" cy="13" r=".7" fill="#fff"/><circle cx="15" cy="16" r=".7" fill="#fff"/>` +
+    `<path d="M15 20V35" stroke="${AU.ink}" stroke-width="1.5"/><path d="M7 38Q15 33 23 38Z" fill="${AU.deep}" stroke="${AU.ink}" stroke-width=".7"/>`);
+
+  const AU_CANDLES = [38, 44, 50, 56, 62];
+  function auCake() {
+    const tier = (x, y, w, h, tone) => {
+      const n = Math.round(w / 8);
+      let drip = `M${x} ${y}H${x + w}V${y + 3}`;
+      for (let i = n - 1; i >= 0; i--) {
+        const a = x + ((i + 1) * w) / n, b = x + (i * w) / n;
+        drip += `Q${f1((a + b) / 2)} ${y + (i % 2 ? 10 : 6)} ${f1(b)} ${y + 3}`;
+      }
+      return `<rect x="${x}" y="${y}" width="${w}" height="${h}" rx="2.5" fill="${auFill(tone)}" stroke="${AU.ink}" stroke-width="1.2"/><path d="${drip}Z" fill="${AU.hi}" stroke="${AU.ink}" stroke-width=".7"/>`;
+    };
+    const pearls = Array.from({ length: 13 }, (_, i) => `<circle cx="${17 + i * 5.5}" cy="98" r="1.3" fill="${AU.hi}" stroke="${AU.ink}" stroke-width=".4"/>`).join("");
+    const candles = AU_CANDLES.map((x) => `<rect x="${x - 1.5}" y="13" width="3" height="11" fill="${AU.hi}" stroke="${AU.ink}" stroke-width=".6"/><path d="M${x - 1.5} 19l3 -2.4M${x - 1.5} 23l3 -2.4" stroke="${AU.deep}" stroke-width=".8"/>`).join("");
+    const flames = AU_CANDLES.map((x) => trFlame(x, ((110 - 13) / 110) * 100)).join("");
+    return `<div class="au-cake">${svgH("0 0 100 110", 28,
+      `${candles}${tier(34, 24, 32, 21, "auBronze")}${tier(24, 45, 52, 25, "auFoil")}${tier(14, 70, 72, 30, "auBronze")}` +
+      `<text x="50" y="94" ${AU_TEXT} font-size="17" fill="${AU.hi}" stroke="${AU.ink}" stroke-width="2.4" paint-order="stroke">27</text>${pearls}` +
+      `<path d="M8 100H92L86 105H58L62 110H38L42 105H14Z" fill="${auFill()}" stroke="${AU.ink}" stroke-width="1"/>`)}${flames}</div>`;
+  }
+
+  // three balloons tied to a stack of presents, floating in the gap between two taps
+  function auCluster(x) {
+    const balloons = [[-5.6, 50], [0, 60], [5.6, 47]].map(([dx, total]) =>
+      sway(auBalloon(10, Math.round((total - 10) * 5)), `left:calc(${x}vw + ${f1(dx - 4)}vh);bottom:16vh`, { amp: 1.1, dur: rand(5, 8) })).join("");
+    return `${balloons}<div class="au-place" style="left:${x}vw">${auGift(7, "auChamp")}${auGift(10.5)}</div>`;
+  }
+
+  function auRoom() {
+    const text = "HAPPY GOLDEN BIRTHDAY";
+    const flags = [...text].map((ch, i) => {
+      if (ch === " ") return "";
+      const t = (i + 0.5) / text.length;
+      const art = svgW("0 0 30 40", 2.2, `<path d="M1 1H29L15 39Z" fill="${AU.coco}" stroke="${AU.foil}" stroke-width="1.2"/><text x="15" y="20" ${AU_TEXT} font-size="18" fill="${AU.foil}">${ch}</text>`);
+      return `<div class="au-flag" style="left:${f1(25.85 + i * 2.3)}vw;top:${f1(0.3 + 6.4 * t * (1 - t))}vh">${art}</div>`;
+    }).join("");
+    const cord = `<svg class="au-cord" viewBox="0 0 100 4" preserveAspectRatio="none"><path d="M0 .3Q50 3.5 100 .3" fill="none" stroke="${AU.ink}" stroke-width="1.5" vector-effect="non-scaling-stroke"/></svg>`;
+    let stars = "";
+    for (let i = 0; i < 16; i++) {
+      const d = rand(2.2, 4.6);
+      stars += `<div class="au-twinkle" style="left:${f1(rand(2, 98))}vw;top:${f1(rand(12, 80))}vh;--tw:${f1(d)}s;--tdl:${f1(-rand(0, d))}s">${svgH("0 0 20 20", rand(1.6, 3.2), auStarPath(AU.hi))}</div>`;
+    }
+    const glitter = fallers(16, () => `<i class="au-fleck" style="--fs:${f1(rand(0.5, 1))}vh;--c:${pick([AU.hi, "#FFF3B0", AU.deep, "#5F3D06"])}"></i>`, { dur: [11, 19], drift: 2.5 });
+    // sized to sit between the middle two medallions and above the tap names
+    const digits = `<div class="au-num" style="left:calc(50vw - 11.6vh);--sd:3.4s">${auDigit(2, 20)}</div><div class="au-num" style="left:calc(50vw - .9vh);--sd:4.1s">${auDigit(7, 20)}</div>`;
+    const places = [[4.6, auBottle(13) + auCoupe(7)], [20, auCoupe(7)], [30, auCoupe(7)], [70, auCoupe(7)], [80, auCoupe(7)], [95.4, auCoupe(7) + auBottle(13)]]
+      .map(([x, art]) => `<div class="au-place" style="left:${x}vw">${art}</div>`).join("");
+    return `${AU_DEFS}<div class="au-wall"></div><div class="au-sheen"></div>${stars}${glitter}${cord}${flags}${digits}` +
+      `<div class="au-table"></div>${auCluster(25)}${auCluster(75)}${places}${auCake()}`;
+  }
+  AMBIENT.golden = auRoom;
+
+  // a little star burst at a point on the screen (px)
+  function auBurst(x, y, n = 18) {
+    let s = "";
+    for (let i = 0; i < n; i++) {
+      const a = (i / n) * Math.PI * 2, r = rand(10, 20);
+      s += `<div class="au-bit" style="--dx:${f1(Math.cos(a) * r)}vh;--dy:${f1(Math.sin(a) * r)}vh;animation-delay:${f1(rand(0, 0.12))}s">${svgH("0 0 20 20", rand(1.8, 3.2), auStarPath(pick([AU.hi, AU.foil, AU.mid])))}</div>`;
+    }
+    spawn(s, "au-burst", `left:${Math.round(x)}px;top:${Math.round(y)}px`, 2);
+  }
+  const auSay = (text, left, top, dur = 4, delay = 0) => `<div class="au-say" style="left:${left};top:${top};--dur:${dur}s;animation-delay:${delay}s">${text}</div>`;
+
+  function auRelease(n = 26) {
+    let s = "";
+    for (let i = 0; i < n; i++) {
+      s += `<div class="au-rise" style="left:${f1(rand(-2, 96))}vw;--dur:${f1(rand(9, 14))}s;animation-delay:${f1(rand(0, 3))}s;--dx:${f1(rand(-8, 8))}vw">` +
+        sway(auBalloon(rand(6.5, 10), 45), "position:relative", { amp: 6, dur: rand(2.5, 4) }) + `</div>`;
+    }
+    spawn(s, "sc-burst", "", 18);
+  }
+
+  // confetti cannons from both corners; the darker flecks are what make it read on gold
+  function auConfetti() {
+    const colors = [AU.hi, AU.foil, AU.mid, AU.deep, "#5F3D06", AU.ink];
+    let s = "";
+    for (const side of [0, 1]) for (let i = 0; i < 38; i++) {
+      const sign = side ? -1 : 1, dx = rand(12, 64) * sign;
+      s += `<i class="au-shot" style="${side ? "right" : "left"}:0;--c:${pick(colors)};--dx:${f1(dx)}vw;--dy:${f1(-rand(48, 96))}vh;--dx2:${f1(dx + rand(2, 12) * sign)}vw;` +
+        `--dur:${f1(rand(4.6, 7))}s;--fl:${f1(rand(0.5, 1.2))}s;animation-delay:${f1(rand(0, 0.5))}s"><b></b></i>`;
+    }
+    spawn(s, "sc-burst", "", 9);
+  }
+
+  function auCoins() {
+    const coin = () => svgH("0 0 30 30", rand(3.2, 5),
+      `<circle cx="15" cy="15" r="14" fill="${auFill()}" stroke="${AU.ink}" stroke-width="1.6"/><circle cx="15" cy="15" r="10.4" fill="none" stroke="${AU.deep}" stroke-width="1.2"/>` +
+      `<text x="15" y="20" ${AU_TEXT} font-size="14" fill="${AU.coco}">27</text>`);
+    let s = "";
+    for (let i = 0; i < 32; i++) {
+      s += `<div class="au-coin" style="left:${f1(rand(0, 98))}vw;--dur:${f1(rand(3.4, 6))}s;animation-delay:${f1(rand(0, 3))}s;--dx:${f1(rand(-3, 3))}vw"><div class="au-flip" style="--fl:${f1(rand(0.6, 1.2))}s">${coin()}</div></div>`;
+    }
+    spawn(s, "sc-burst", "", 10);
+  }
+
+  // the candles on the cake blow out, then relight
+  function auWish() {
+    const cake = layer.querySelector(".au-cake");
+    if (!cake) return;
+    spawn(auSay("Make a wish!", "50vw", "47vh", 3.6), "sc-burst", "", 4);
+    setTimeout(() => {
+      if (!cake.isConnected) return;
+      cake.classList.add("au-out");
+      const r = cake.getBoundingClientRect();
+      const wisps = AU_CANDLES.map((x, i) => `<i class="au-smoke" style="left:${Math.round(r.left + (r.width * x) / 100)}px;top:${Math.round(r.top + r.height * 0.1)}px;animation-delay:${f1(i * 0.08)}s"></i>`).join("");
+      spawn(wisps, "sc-burst", "", 3);
+    }, 3500);
+    setTimeout(() => {
+      if (!cake.isConnected) return;
+      const r = cake.getBoundingClientRect();
+      auBurst(r.left + r.width / 2, r.top + r.height * 0.1, 24);
+      spawn(auSay("Wish granted!", "50vw", "47vh", 3.2), "sc-burst", "", 3.4);
+    }, 5400);
+    setTimeout(() => cake.classList.remove("au-out"), 6000);
+  }
+
+  function auChampagne() {
+    const x = pick([25, 75]), T = 7.5;
+    const foam = Array.from({ length: 18 }, () =>
+      `<i class="au-foam" style="--dx:${f1(-rand(4, 24))}vh;--dy:${f1(-rand(4, 26))}vh;animation-delay:${f1(2.6 + rand(0, 0.7))}s"></i>`).join("");
+    spawn(`<div class="au-bot">${auBottle(24)}</div><div class="au-spout"><i class="au-cork"></i>${foam}</div>${auSay("Pop!", "-9vh", "-52vh", 3, 2.6)}`,
+      "au-pop", `left:${x}vw;bottom:9.6vh;--dur:${T}s`, T);
+  }
+
+  // sparks fly in from one point and spell out a big 27
+  const AU_NUMS = { 2: [[0, 0.16], [0.2, 0], [0.8, 0], [1, 0.16], [1, 0.36], [0, 1], [1, 1]], 7: [[0, 0], [1, 0], [0.35, 1]] };
+  function auTrace(line, ox, w, h, step = 2.1) {
+    const pts = [];
+    for (let i = 1; i < line.length; i++) {
+      const ax = line[i - 1][0] * w, ay = line[i - 1][1] * h, bx = line[i][0] * w, by = line[i][1] * h;
+      const n = Math.max(1, Math.round(Math.hypot(bx - ax, by - ay) / step));
+      for (let k = i === 1 ? 0 : 1; k <= n; k++) pts.push([ox + ax + ((bx - ax) * k) / n, ay + ((by - ay) * k) / n]);
+    }
+    return pts;
+  }
+  function auFireworks() {
+    const x = pick([25, 75]), w = 7.5, h = 19, gap = 2.4, T = 6;
+    const pts = [...auTrace(AU_NUMS[2], -(w + gap / 2), w, h), ...auTrace(AU_NUMS[7], gap / 2, w, h)];
+    const dots = pts.map(([px, py]) => `<i class="au-dot" style="--x:${f1(px)}vh;--y:${f1(py - h / 2)}vh;--dur:${T}s;animation-delay:${f1(rand(0, 0.35))}s"></i>`).join("");
+    spawn(dots, "au-fw", `left:${x}vw;top:60vh`, T + 0.4);
+    for (let k = 0; k < 4; k++) setTimeout(() => { if (actors()) auBurst(rand(0.06, 0.94) * innerWidth, rand(0.16, 0.62) * innerHeight, 16); }, 500 + k * 1150);
+  }
+
+  function auPresent() {
+    const x = pick([25, 75]), T = 7;
+    const box = spawn(`<div class="au-giftbox">${auGift(16, "auBronze", AU.hi)}</div>`, "au-pop", `left:${x}vw;bottom:9.6vh;--dur:${T}s`, T);
+    if (!box) return;
+    setTimeout(() => {
+      if (!box.isConnected) return;
+      box.classList.add("au-opened");
+      const r = box.querySelector(".au-giftbox").getBoundingClientRect();
+      auBurst(r.left + r.width / 2, r.top + r.height * 0.3, 26);
+    }, 2700);
+  }
+
+  // a crown drops onto one keg: today's birthday pick
+  function auCrown() {
+    const kegs = [...document.querySelectorAll(".keg")];
+    if (!kegs.length) return;
+    const r = pick(kegs).getBoundingClientRect(), T = 8, right = r.right + innerWidth * 0.15 < innerWidth;
+    const crown = svgH("0 0 60 40", 5.6, // short enough to clear the style line above the keg
+      `<path d="M4 37L1 11L17 23L30 3L43 23L59 11L56 37Z" fill="${auFill()}" stroke="${AU.ink}" stroke-width="2" stroke-linejoin="round"/><path d="M5 31H55" stroke="${AU.ink}" stroke-width="1.4"/>` +
+      `<circle cx="1.5" cy="9" r="3" fill="${AU.hi}" stroke="${AU.ink}"/><circle cx="30" cy="3" r="3.2" fill="${AU.hi}" stroke="${AU.ink}"/><circle cx="58.5" cy="9" r="3" fill="${AU.hi}" stroke="${AU.ink}"/>` +
+      `<path d="M30 16L34 23L30 29L26 23Z" fill="${AU.coco}" stroke="${AU.hi}" stroke-width=".7"/><circle cx="16" cy="29" r="2" fill="${AU.coco}"/><circle cx="44" cy="29" r="2" fill="${AU.coco}"/>`);
+    const edge = Math.round(r.width / 2 + 10);
+    spawn(`<div class="au-crown">${crown}</div><div class="au-tag" style="${right ? `left:${edge}px` : `right:${edge}px`}">Birthday pick!</div>`,
+      "au-crown-box", `left:${Math.round((r.left + r.right) / 2)}px;top:${Math.round(r.top - 7)}px;--dur:${T}s`, T);
+  }
+
+  // a golden retriever in a party hat, naturally
+  function auDog() {
+    const coat = "#E7A93F", shade = "#B9781F", lite = "#F6CF83", line = `stroke="${AU.ink}" stroke-width="1.2"`;
+    const leg = (x, cls, c) => `<rect class="sc-leg ${cls}" x="${x}" y="56" width="8" height="30" rx="3.5" fill="${c}" ${line}/>`;
+    return svgH("0 -74 124 166", 24,
+      `<path d="M82 -24C76 -6 90 16 86 42" stroke="${AU.ink}" stroke-width="1" fill="none"/><g transform="translate(62 -74)">${auHead("auFoil")}</g>` +
+      `<path class="au-wag" d="M26 38C12 32 5 20 11 10C18 20 26 26 36 30Z" fill="${lite}" ${line}/>` +
+      `${leg(32, "b", shade)}${leg(70, "a", shade)}` +
+      `<path d="M24 38C30 27 72 25 84 33C91 44 87 59 74 61H36C26 61 20 49 24 38Z" fill="${coat}" ${line}/><path d="M36 60L40 67L46 60L52 68L58 60L64 67L71 60Z" fill="${lite}" ${line}/>` +
+      `${leg(40, "a", coat)}${leg(62, "b", coat)}` +
+      `<path d="M78 42C80 29 86 22 96 22C106 22 113 30 114 37C114 43 108 47 100 47C94 51 88 54 81 54Z" fill="${coat}" ${line}/>` +
+      `<path d="M104 45Q109 51 104 54Q99 52 100 46Z" fill="#E8637A" ${line}/><path d="M92 25C85 27 83 39 88 46C95 44 97 33 95 25Z" fill="${shade}" ${line}/>` +
+      `<ellipse cx="113" cy="36.5" rx="3.2" ry="2.5" fill="${AU.coco}"/><circle cx="102" cy="30" r="2" fill="${AU.coco}"/><path d="M104 44Q110 44 113 39" stroke="${AU.ink}" fill="none"/>` +
+      `<path d="M80 40Q86 48 92 51" stroke="${AU.coco}" stroke-width="4.4" fill="none"/><circle cx="90" cy="54" r="3" fill="${AU.foil}" stroke="${AU.ink}" stroke-width=".8"/>` +
+      `<path d="M92 24L99 3L107 25Z" fill="${auFill("auBronze")}" ${line}/><path d="M95.6 14L103.6 15.4M93.8 20L105.6 21.6" stroke="${AU.hi}" stroke-width="1.5"/><circle cx="99" cy="3" r="3" fill="${AU.hi}" ${line}/>`);
+  }
+
+  function auDisco() {
+    const T = 12, x = pick([25, 75]);
+    let rows = "";
+    for (let r = 0; r < 10; r++) {
+      const a = pick([AU.foil, AU.hi, AU.mid]), b = pick([AU.deep, AU.mid, "#FFE27A"]);
+      for (let c = -2; c < 10; c++) rows += `<rect x="${c * 8}" y="${r * 6}" width="7.2" height="5.2" fill="${c % 2 ? a : b}"/>`;
+    }
+    const ball = svgH("0 0 60 60", 17,
+      `<clipPath id="auBallClip"><circle cx="30" cy="30" r="28"/></clipPath><circle cx="30" cy="30" r="28" fill="${AU.ink}"/>` +
+      `<g clip-path="url(#auBallClip)"><g class="au-facets">${rows}</g></g><circle cx="30" cy="30" r="28" fill="none" stroke="${AU.ink}" stroke-width="2"/>` +
+      `<ellipse cx="20" cy="17" rx="7" ry="4.6" fill="#fff" opacity=".75" transform="rotate(-30 20 17)"/>`);
+    let spots = "";
+    for (let i = 0; i < 16; i++) {
+      spots += `<i class="au-spot" style="left:${f1(rand(2, 96))}vw;top:${f1(rand(12, 84))}vh;--sd:${f1(rand(1.8, 3.6))}s;--sdl:${f1(-rand(0, 2))}s"></i>`;
+    }
+    spawn(`${spots}<div class="au-ball" style="left:${x}vw"><i class="au-rope"></i>${ball}</div>`, "sc-burst sc-fade", `--dur:${T}s`, T);
+  }
+
+  function auCard() {
+    const [small, big] = pick([["A golden birthday", "27 on the 27th"], ["Officially", "27 karat"], ["Only happens once", "Drink it in"],
+      ["Worth your weight", "In gold"], ["Cheers to", "Solid gold"]]);
+    spawn(`<div class="au-card"><small>${small}</small><p>${big}</p></div>`, "au-card-box", `left:${pick([25, 75])}vw;--dur:9s`, 9);
+  }
+
+  SURPRISES.golden = {
+    goldballoons: { w: 3, run: () => auRelease() },
+    goldconfetti: { w: 3, run: auConfetti },
+    wish: { w: 2.5, run: auWish },
+    retriever: { w: 2.5, run: () => cross(auDog(), { bottom: 0.6, dur: rand(11, 14), bob: "sc-trot" }) },
+    coins: { w: 2, run: auCoins },
+    champagne: { w: 2, run: auChampagne },
+    fireworks27: { w: 2, run: auFireworks },
+    gift: { w: 2, run: auPresent },
+    crown: { w: 2, run: auCrown },
+    disco: { w: 1.5, run: auDisco },
+    goldcard: { w: 1.5, run: auCard },
+  };
+
   // scene list for the console (seasons rotate under "auto"; the rest are themes)
   const FOOTBALL_ICON = `<ellipse cx="16" cy="16" rx="13" ry="8" fill="#9A5B2E" transform="rotate(-30 16 16)"/><path d="M11 19L21 13M13 15.4l1.6 2.6M15.6 13.8l1.6 2.6M18.2 12.2l1.6 2.6" stroke="#fff" stroke-width="1.4" stroke-linecap="round"/>`;
   const VOLLEYBALL_ICON = `<circle cx="16" cy="16" r="12" fill="#F7F7F2"/><path d="M16 4Q8 12 11 28M16 4Q24 12 21 28M4.5 13Q16 18 27.5 13" stroke="#9A9A92" stroke-width="1.4" fill="none"/><path d="M16 4Q24 12 21 28Q27 22 27.5 13Q24 6 16 4Z" fill="#D00000"/>`;
   const TRAITORS_ICON = `<path d="M16 3C8 3 5 11 6 19Q4 24 3 29H29Q28 24 26 19Q27 11 16 3Z" fill="#7A1528"/><path d="M16 10C11.5 10 10 15 11.5 20Q16 23 20.5 20Q22 15 16 10Z" fill="#0B0608"/><circle cx="13.8" cy="16" r="1.3" fill="#FF4B3E"/><circle cx="18.2" cy="16" r="1.3" fill="#FF4B3E"/>`;
+  const GOLDEN_ICON = `<path d="M16 2C9.5 2 6 7 6 12.5C6 19 12 24 14.8 26H17.2C20 24 26 19 26 12.5C26 7 22.5 2 16 2Z" fill="#F0B31C" stroke="#FFE27A" stroke-width="1"/><text x="16" y="17.5" text-anchor="middle" font-family="Barlow Condensed, sans-serif" font-weight="800" font-size="11" fill="#2E1C03">27</text><path d="M14.8 26H17.2L18 28.5H14Z" fill="#A86F0A"/>`;
   const CATALOG = [
     { key: "spring", label: "Spring", seasonal: true },
     { key: "summer", label: "Summer", seasonal: true },
@@ -1089,6 +1362,7 @@
     { key: "gameday", label: "Game Day", icon: FOOTBALL_ICON },
     { key: "volleyball", label: "Volleyball", icon: VOLLEYBALL_ICON },
     { key: "traitors", label: "Traitors", icon: TRAITORS_ICON },
+    { key: "golden", label: "Golden 27", icon: GOLDEN_ICON },
   ];
 
   // ================================================================ engine
