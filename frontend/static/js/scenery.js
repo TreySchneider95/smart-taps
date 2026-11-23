@@ -1,5 +1,5 @@
 /* Scenery behind the tap board: a small ambient scene per season (grass, snow, falling
-   leaves…) or theme (Husker football and volleyball), plus surprises that wander through now and then.
+   leaves…) or theme (Husker football and volleyball, Traitors party), plus surprises that wander through now and then.
    To add a scene: an AMBIENT entry, a SURPRISES entry, a CATALOG row, and its key in
    SCENES in backend/taps/server.py.
 
@@ -757,9 +757,283 @@
     mascot: SURPRISES.gameday.mascot,
   };
 
+  // ================================================================ traitors (murder-mystery wine party)
+  // A candlelit banquet in black, burgundy and old gold. One seated guest has red eyes.
+  // The board's own colors switch too: see :root[data-scene="traitors"] in scenery.css.
+  const WINE = "#7A1528", WINE_HI = "#A8243C", GILT = "#C9A45C", PARCH = "#EADFC6", SHADOW = "#0E080A", CLOTH = "#170C10";
+  const RIM = "rgba(200,80,100,.75)"; // a thin edge so black cloaks still read in a black room
+  const TR_GAPS = [25, 50, 75];       // vw: the open wall between the four taps
+  const TR_STAR = `<path d="M20 2L24 14L37 9L28 20L38 30L25 27L20 39L16 27L3 31L12 20L4 9L16 14Z" fill="${GILT}"/><path d="M20 9L22.5 16L30 14L25 20L31 26L23.5 24L20 31L17.5 24L10 26L15 20L10 14L17.5 16Z" fill="${WINE_HI}"/>`;
+
+  const trFlame = (x, y) => {
+    const d = rand(0.9, 1.6);
+    return `<i class="tr-flame" style="left:${f1(x)}%;bottom:${f1(y)}%;--fd:${f1(d)}s;--fdl:${f1(-rand(0, d))}s"><b></b></i>`;
+  };
+  const gobletArt = (wine = WINE) =>
+    `<path d="M3 3Q3 20 12 22Q21 20 21 3Z" fill="rgba(235,225,225,.13)" stroke="rgba(235,225,225,.65)" stroke-width=".8"/>` +
+    `<path d="M3.6 9Q3.8 20 12 21.4Q20.2 20 20.4 9Z" fill="${wine}"/><path d="M6 6Q6 13 8 16" stroke="rgba(255,255,255,.4)" stroke-width=".8" fill="none"/>` +
+    `<path d="M12 22V35" stroke="rgba(235,225,225,.7)" stroke-width="1.5"/><path d="M5 38Q12 33 19 38Z" fill="rgba(235,225,225,.7)"/>`;
+  const trGoblet = (h, wine) => svgH("0 0 24 40", h, gobletArt(wine));
+  const trBottle = (h) => svgH("0 0 20 60", h,
+    `<path d="M7 1H13V16Q18 20 18 27V57Q18 59 16 59H4Q2 59 2 57V27Q2 20 7 16Z" fill="#160C10" stroke="${RIM}" stroke-width=".7"/>` +
+    `<rect x="6.6" y="1" width="6.8" height="9" fill="${WINE}"/><rect x="3.4" y="32" width="13.2" height="16" fill="${PARCH}"/><path d="M6 37H14M6 41H14" stroke="${WINE}" stroke-width="1"/>`);
+
+  function trCandelabra(left) {
+    const flames = [[10, 16], [30, 7], [50, 16]].map(([x, y]) => trFlame((x / 60) * 100, ((90 - y) / 90) * 100)).join("");
+    const art = svgH("0 0 60 90", 19,
+      `<path d="M30 84V30M10 36Q10 54 30 54Q50 54 50 36" stroke="${GILT}" stroke-width="2.4" fill="none"/><path d="M19 90Q21 81 30 81Q39 81 41 90Z" fill="${GILT}"/>` +
+      `<path d="M5 36H15L13 39H7ZM25 28H35L33 31H27ZM45 36H55L53 39H47Z" fill="${GILT}"/>` +
+      `<path d="M7.5 18H12.5V36H7.5ZM27.5 9H32.5V28H27.5ZM47.5 18H52.5V36H47.5Z" fill="${PARCH}"/>`);
+    return `<div class="tr-stand" style="left:${left}vw">${art}${flames}</div>`;
+  }
+
+  function trChandelier() {
+    const xs = [14, 32, 50, 68, 86];
+    const flames = xs.map((x) => trFlame(x, ((70 - 30) / 70) * 100)).join("");
+    return `<div class="tr-chandelier">${svgH("0 0 100 70", 20,
+      `<path d="M50 0V40" stroke="${GILT}" stroke-width="1.4"/><path d="M14 44Q32 62 50 56Q68 62 86 44M32 44Q40 54 50 56Q60 54 68 44M50 40V62" stroke="${GILT}" stroke-width="2" fill="none"/>` +
+      `<circle cx="50" cy="40" r="3.4" fill="${GILT}"/><path d="M47 62H53L50 69Z" fill="${WINE_HI}"/>` +
+      xs.map((x) => `<path d="M${x - 5} 44H${x + 5}L${x + 3} 47H${x - 3}Z" fill="${GILT}"/><rect x="${x - 2}" y="31" width="4" height="13" fill="${PARCH}"/>`).join(""))}${flames}</div>`;
+  }
+
+  // a gilt-framed ancestor whose eyes slide around the room
+  function trPortrait(left, hooded) {
+    const sitter = hooded
+      ? `<path d="M25 13C14 13 11 25 12 36Q8 44 7 54H43Q42 44 38 36Q39 25 25 13Z" fill="#120A0D"/><path d="M25 22C19 22 17 29 19 35Q25 39 31 35Q33 29 25 22Z" fill="#020102"/>`
+      : `<path d="M8 54Q10 40 25 38Q40 40 42 54Z" fill="${WINE}"/><circle cx="25" cy="27" r="10" fill="#B99279"/><path d="M15 26Q15 15 25 15Q35 15 35 26Q30 20 25 21Q20 20 15 26Z" fill="#20130F"/>`;
+    const eyeY = hooded ? 29 : 27;
+    const eyes = hooded
+      ? `<g class="tr-shifty" fill="#FF4B3E"><circle cx="22" cy="${eyeY}" r="1.2"/><circle cx="28" cy="${eyeY}" r="1.2"/></g>`
+      : `<ellipse cx="21" cy="${eyeY}" rx="2.2" ry="1.5" fill="#EFE7DA"/><ellipse cx="29" cy="${eyeY}" rx="2.2" ry="1.5" fill="#EFE7DA"/><g class="tr-shifty" fill="#111"><circle cx="21" cy="${eyeY}" r="1"/><circle cx="29" cy="${eyeY}" r="1"/></g>`;
+    return `<div class="tr-portrait" style="left:${left}vw">${svgH("0 0 50 64", 19,
+      `<rect x="1" y="1" width="48" height="62" rx="2" fill="#7E6232" stroke="${GILT}" stroke-width="2"/><rect x="6" y="6" width="38" height="52" fill="#1B1012" stroke="#3B2A16"/>` +
+      `<svg x="6" y="6" width="38" height="52" viewBox="6 6 38 52">${sitter}${eyes}</svg>`)}</div>`;
+  }
+
+  function trSeated(left, traitor) {
+    const who = traitor
+      ? `<path d="M30 16C20 16 17 26 19 36Q12 44 11 70H49Q48 44 41 36Q43 26 30 16Z" fill="#050304" stroke="${RIM}" stroke-width=".6"/><path d="M30 24C25 24 23 30 25 35Q30 38 35 35Q37 30 30 24Z" fill="#000"/>` +
+        `<g class="tr-blink" fill="#FF4B3E"><circle cx="27.5" cy="30.5" r="1.1"/><circle cx="32.5" cy="30.5" r="1.1"/></g>`
+      : `<path d="M13 70Q15 44 30 42Q45 44 47 70Z" fill="#070405"/><circle cx="30" cy="30" r="9.5" fill="#070405"/>`;
+    return `<div class="tr-seat" style="left:${f1(left)}vw">${svgH("0 0 60 70", 17,
+      `<path d="M8 70V20Q8 5 30 2Q52 5 52 20V70Z" fill="#240E15" stroke="rgba(201,164,92,.4)" stroke-width="1"/><path d="M14 70V23Q14 11 30 8Q46 11 46 23V70" fill="#32121C"/>${who}`)}</div>`;
+  }
+
+  function trRoom() {
+    const valance = `<svg class="tr-valance" viewBox="0 0 100 10" preserveAspectRatio="none"><path d="M0 0H100V5${Array.from({ length: 10 }, (_, i) => `Q${95 - i * 10} 11 ${90 - i * 10} 5`).join("")}Z" fill="${WINE}"/>` +
+      `<path d="M100 5${Array.from({ length: 10 }, (_, i) => `Q${95 - i * 10} 11 ${90 - i * 10} 5`).join("")}" fill="none" stroke="${GILT}" stroke-width="1.4" vector-effect="non-scaling-stroke"/></svg>`;
+    const traitorSeat = pick([1, 3, 5, 7]);
+    let seats = "";
+    for (let i = 0; i < 9; i++) seats += trSeated(1 + i * 11.2, i === traitorSeat);
+    let places = "";
+    [4.5, 19.8, 30.5, 44.2, 55.8, 69.5, 80.5, 95.5].forEach((x, i) => { // kept clear of the text under each keg
+      places += `<div class="tr-place" style="left:${x}vw">${i % 3 === 1 ? trBottle(10) : ""}${trGoblet(6)}</div>`;
+    });
+    return `<div class="tr-wall"></div>${valance}${trPortrait(25, false)}${trPortrait(75, true)}${trChandelier()}${seats}` +
+      `<div class="tr-table"></div>${places}${TR_GAPS.map(trCandelabra).join("")}`;
+  }
+  AMBIENT.traitors = trRoom;
+
+  // the cloaked figure, facing right. .tr-arm swings from the shoulder.
+  function trCloak({ dagger = false, h = 22 } = {}) {
+    const blade = dagger ? `<path d="M54.5 58V38L56 33L57.5 38V58Z" fill="#DDE1E6"/><rect x="51" y="57" width="10" height="2" fill="${GILT}"/>` : "";
+    return svgH("0 0 64 104", h,
+      `<path d="M24 97h7l3 3H24ZM38 97h7l3 3H38Z" fill="#050304"/>` +
+      `<path class="tr-hem" d="M22 34Q10 64 6 96Q13 91 19 97Q26 91 32 98Q39 92 45 97Q51 92 56 95Q52 62 43 34Z" fill="${SHADOW}" stroke="${RIM}"/>` +
+      `<path d="M24 46Q20 70 17 90M33 48Q33 72 32 92M41 46Q44 70 46 90" stroke="rgba(150,50,70,.5)" fill="none"/>` +
+      `<path d="M32 2C18 2 13 16 15 30Q16 40 23 46L43 42Q49 30 46 17Q42 4 32 2Z" fill="${CLOTH}" stroke="${RIM}"/>` +
+      `<path d="M35 13C28 14 26 23 28 30Q34 36 43 30Q46 21 42 15Q39 12 35 13Z" fill="#020102"/>` +
+      `<g class="tr-blink" fill="#FF4B3E"><ellipse cx="34" cy="23" rx="1.9" ry="1.2"/><ellipse cx="40.5" cy="23" rx="1.7" ry="1.2"/></g>` +
+      `<g class="tr-arm" style="transform-origin:38px 50px">${blade}<path d="M38 48Q50 52 56 58L52 64Q42 62 34 56Z" fill="${CLOTH}" stroke="${RIM}"/><circle cx="55.5" cy="60" r="3" fill="#D8B59A"/></g>`);
+  }
+
+  // a dinner guest in their finest, facing right, wine in hand
+  function trGuest() {
+    const skin = pick(["#E8B990", "#C98E6A", "#8D5A3B", "#F1C8A5"]), hair = pick(["#3A2A1E", "#C8A05A", "#6B4226", "#1F1A17"]);
+    const outfit = Math.random() < 0.5
+      ? `<path d="M15 24Q22 20 29 24L30 44L38 81H6L14 44Z" fill="${WINE_HI}"/><path d="M14 44H30" stroke="${GILT}" stroke-width="1.2"/>`
+      : `<path d="M16 48L15 80M28 48L29 80" stroke="#15151A" stroke-width="6" stroke-linecap="round"/><path d="M15 24Q22 20 29 24L31 50H13Z" fill="#23232B"/><path d="M19 23L22 34L25 23Z" fill="#F4F1E8"/><path d="M20.4 23.4H23.6L22 26Z" fill="${WINE_HI}"/>`;
+    return svgH("0 0 48 84", 20,
+      `${outfit}<rect x="19.5" y="17" width="5" height="6" fill="${skin}"/><circle cx="22" cy="11" r="8" fill="${skin}"/><path d="M14 11Q14 2 22 2Q30 2 30 9Q24 5 18 8Q16 12 16 16Q14 14 14 11Z" fill="${hair}"/>` +
+      `<g class="tr-alive"><circle cx="26.5" cy="10.5" r="1" fill="#222"/><path d="M25 15Q27 16 29 14.6" stroke="#6B2A22" fill="none"/></g>` +
+      `<g class="tr-dead" stroke="#222" stroke-width="1"><path d="M24.6 9l3 3M27.6 9l-3 3"/><path d="M25 15.6h4"/></g>` +
+      `<g class="tr-sip" style="transform-origin:27px 27px"><path d="M27 27L36 34" stroke="${skin}" stroke-width="3.6" stroke-linecap="round"/><g transform="translate(31 16) scale(.62)">${gobletArt()}</g></g>`);
+  }
+
+  const appear = (el, T, a, b, c = 0.92) => play$(el, [
+    { opacity: 0, offset: 0 }, { opacity: 0, offset: a }, { opacity: 1, offset: b }, { opacity: 1, offset: c }, { opacity: 0, offset: 1 }], T);
+
+  // tiptoes along the table, freezing to check over a shoulder
+  function trSneak() {
+    const T = 17, rtl = Math.random() < 0.5;
+    const at = (x) => `translateX(${f1(rtl ? 86 - x : x)}vw)`;
+    const box = spawn(`<div class="tr-p tr-tiptoe"><div style="transform:scaleX(${rtl ? -1 : 1})"><div class="tr-look">${trCloak()}</div></div></div>`, "tr-floor", "", T);
+    if (!box) return;
+    const stops = [[-18, 0], [18, 0.2], [18, 0.3], [44, 0.47], [44, 0.57], [70, 0.73], [70, 0.81], [114, 1]];
+    play$(box.querySelector(".tr-p"), stops.map(([x, offset]) => ({ transform: at(x), offset })), T);
+    const looks = [[1, 0], [1, 0.22], [-1, 0.24], [-1, 0.27], [1, 0.29], [1, 0.49], [-1, 0.51], [-1, 0.54], [1, 0.56], [1, 0.75], [-1, 0.77], [-1, 0.79], [1, 0.81], [1, 1]];
+    play$(box.querySelector(".tr-look"), looks.map(([s, offset]) => ({ transform: `scaleX(${s})`, offset })), T);
+  }
+
+  const TR_CLUES = [
+    `<g fill="none" stroke="${PARCH}" stroke-width="1.5" stroke-linecap="round"><path d="M9 28Q7 8 20 7Q33 8 31 28"/><path d="M13 31Q11 12 20 12Q29 12 27 30"/><path d="M17 33Q15 17 20 17Q25 17 23 32"/><path d="M20 22V33"/></g>`,
+    `<path d="M19 3L22 7V25H18V7Z" fill="#DDE1E6"/><rect x="13" y="25" width="14" height="2.6" fill="${GILT}"/><rect x="18" y="27" width="4" height="9" fill="${WINE_HI}"/>`,
+    `<g fill="none" stroke="${GILT}" stroke-width="2.4"><circle cx="20" cy="10" r="6"/><path d="M20 16V35M20 28h6M20 33h5"/></g>`,
+    `<path d="M16 4H24V8L23 10V14Q31 19 31 27Q31 36 20 36Q9 36 9 27Q9 19 17 14V10L16 8Z" fill="rgba(235,225,225,.2)" stroke="${PARCH}"/><path d="M10 25Q20 21 30 25Q31 35 20 35Q9 35 10 25Z" fill="#5EE26A"/>`,
+  ];
+
+  // a magnifying glass drifts room to room, turning up a clue at each stop
+  function trMagnifier() {
+    const T = 15;
+    const spots = TR_GAPS.map((x) => [x, rand(52, 60)]); // below the portraits, above the candles
+    const clues = [...TR_CLUES].sort(() => Math.random() - 0.5).slice(0, 3);
+    const clueHTML = spots.map(([x, y], i) => `<div class="tr-clue" style="left:${f1(x)}vw;top:${f1(y)}vh">${svgH("0 0 40 40", 8, clues[i])}</div>`).join("");
+    const lens = svgH("0 0 100 140", 21,
+      `<path d="M69 72L94 132" stroke="#3B2413" stroke-width="11" stroke-linecap="round"/><path d="M69 72L94 132" stroke="${GILT}" stroke-width="4" stroke-linecap="round"/>` +
+      `<circle cx="46" cy="46" r="39" fill="rgba(235,225,190,.1)" stroke="${GILT}" stroke-width="7"/><circle cx="46" cy="46" r="34" fill="none" stroke="rgba(255,255,255,.3)"/>` +
+      `<path d="M23 34Q30 18 48 16" stroke="rgba(255,255,255,.55)" stroke-width="3.5" stroke-linecap="round" fill="none"/>`);
+    const box = spawn(`${clueHTML}<div class="tr-lens"><div class="tr-scan">${lens}</div></div>`, "sc-burst", "", T);
+    if (!box) return;
+    // the lens's center (46, 46 of 100 x 140) lands on each clue
+    const pos = (x, y) => `translate(calc(${f1(x)}vw - 6.9vh), calc(${f1(y)}vh - 6.9vh))`;
+    const beats = [[0.2, 0.33], [0.45, 0.58], [0.7, 0.84]];
+    const frames = [{ transform: pos(-14, 24), offset: 0 }];
+    spots.forEach(([x, y], i) => frames.push({ transform: pos(x, y), offset: beats[i][0], easing: "ease-in-out" }, { transform: pos(x, y), offset: beats[i][1], easing: "ease-in-out" }));
+    frames.push({ transform: pos(116, 20), offset: 1 });
+    play$(box.querySelector(".tr-lens"), frames, T);
+    box.querySelectorAll(".tr-clue").forEach((c, i) => appear(c, T, beats[i][0] - 0.02, beats[i][0] + 0.03, beats[i][1] + 0.04));
+  }
+
+  // the main event: a guest enjoys their wine, the traitor creeps up, and only a chalk outline is left
+  function trMurder() {
+    const T = 14, x = pick(TR_GAPS) - 4;
+    const chalk = svgH("0 0 92 36", 8,
+      `<path d="M4 18C4 12 11 9 16 12C18 14 19 15 22 15L34 11L42 5L46 8L40 15L52 14L70 8L84 3L87 7L72 15L88 20L86 25L70 21L54 24L40 27L47 33L42 35L33 28L22 23C17 25 4 26 4 18Z" fill="none" stroke="rgba(255,255,255,.9)" stroke-width="1.5" stroke-dasharray="3 1.6"/>`);
+    const box = spawn(
+      `<div class="tr-chalk" style="left:${f1(x)}vw">${chalk}</div><div class="tr-spill" style="left:calc(${f1(x)}vw + 15vh)"></div>` +
+      `<div class="tr-p tr-victim">${trGuest()}</div><div class="tr-p tr-killer"><div class="tr-look">${trCloak({ dagger: true })}</div></div>` +
+      `<div class="tr-pow" style="left:calc(${f1(x)}vw + 2vh);animation-delay:${f1(T * 0.39)}s">${svgH("0 0 40 40", 11, TR_STAR)}</div>` +
+      `<div class="tr-p tr-spirit">${ghostSVG(false)}</div>`,
+      "tr-floor", "", T);
+    if (!box) return;
+    const [victim, killer, spirit] = [".tr-victim", ".tr-killer", ".tr-spirit"].map((s) => box.querySelector(s));
+    const gx = `translateX(${f1(x)}vw)`, kx = (v) => `translateX(${f1(v)}vw)`;
+    play$(victim, [
+      { transform: `${gx} rotate(0)`, opacity: 0, offset: 0 }, { transform: `${gx} rotate(0)`, opacity: 1, offset: 0.05 },
+      { transform: `${gx} rotate(0)`, offset: 0.39, easing: "ease-in" }, { transform: `${gx} rotate(84deg)`, offset: 0.45 },
+      { transform: `${gx} rotate(84deg)`, opacity: 1, offset: 0.62 }, { transform: `${gx} rotate(84deg)`, opacity: 0, offset: 0.68 },
+      { transform: `${gx} rotate(84deg)`, opacity: 0, offset: 1 }], T);
+    play$(killer, [
+      { transform: kx(-18), offset: 0 }, { transform: kx(x - 9), offset: 0.3 }, { transform: kx(x - 9), offset: 0.6 }, { transform: kx(-20), offset: 0.8 }, { transform: kx(-20), offset: 1 }], T);
+    play$(killer.querySelector(".tr-look"), [
+      { transform: "scaleX(1)", offset: 0 }, { transform: "scaleX(1)", offset: 0.58 }, { transform: "scaleX(-1)", offset: 0.6 }, { transform: "scaleX(-1)", offset: 1 }], T);
+    play$(killer.querySelector(".tr-arm"), [
+      { transform: "rotate(0)", offset: 0 }, { transform: "rotate(0)", offset: 0.31 }, { transform: "rotate(-125deg)", offset: 0.36 }, { transform: "rotate(-125deg)", offset: 0.385 },
+      { transform: "rotate(25deg)", offset: 0.4 }, { transform: "rotate(0)", offset: 0.48 }, { transform: "rotate(0)", offset: 1 }], T);
+    setTimeout(() => victim.classList.add("tr-fallen"), T * 400);
+    appear(box.querySelector(".tr-chalk"), T, 0.5, 0.58);
+    appear(box.querySelector(".tr-spill"), T, 0.43, 0.47);
+    play$(spirit, [
+      { transform: `translate(calc(${f1(x)}vw + 6vh), 0)`, opacity: 0, offset: 0 }, { transform: `translate(calc(${f1(x)}vw + 6vh), 0)`, opacity: 0, offset: 0.62 },
+      { transform: `translate(calc(${f1(x)}vw + 7vh), -14vh)`, opacity: 0.85, offset: 0.76 }, { transform: `translate(calc(${f1(x)}vw + 5vh), -40vh)`, opacity: 0, offset: 0.98 },
+      { transform: `translate(calc(${f1(x)}vw + 5vh), -40vh)`, opacity: 0, offset: 1 }], T);
+  }
+
+  // a gloved hand slips something into someone's glass
+  function trPoison() {
+    const T = 11, x = pick(TR_GAPS) + pick([-6, 6]);
+    const drops = [0, 1, 2].map((i) => `<i class="tr-drop" style="animation-delay:${f1(T * 0.28 + i * 0.45)}s"></i>`).join("");
+    const fizz = Array.from({ length: 6 }, (_, i) => `<i class="tr-fizz" style="left:${f1(rand(28, 68))}%;animation-delay:${f1(T * 0.42 + i * 0.28)}s"></i>`).join("");
+    const skull = svgH("0 0 24 26", 5.5,
+      `<path d="M12 1C5 1 2 6 2 11C2 15 4 17 6 18V23H18V18C20 17 22 15 22 11C22 6 19 1 12 1Z" fill="#CFF7C9"/><circle cx="8" cy="11" r="2.8" fill="#102414"/><circle cx="16" cy="11" r="2.8" fill="#102414"/>` +
+      `<path d="M12 14L10.5 17H13.5Z" fill="#102414"/><path d="M9 19V23M12 19V23M15 19V23" stroke="#102414"/>`);
+    const hand = svgH("0 0 40 60", 15,
+      `<rect x="12" y="-300" width="16" height="326" fill="${CLOTH}" stroke="${RIM}"/><path d="M10 24H30V29H10Z" fill="${WINE}"/>` +
+      `<path d="M13 29H27L29 40Q24 45 16 43L11 38Z" fill="#17171B" stroke="rgba(235,225,225,.3)"/>` +
+      `<g transform="rotate(32 21 44)"><rect x="17" y="38" width="8" height="17" rx="2" fill="rgba(160,255,170,.3)" stroke="#CFF7C9"/><rect x="17.6" y="46" width="6.8" height="8.5" fill="#5EE26A"/><rect x="18.6" y="34.5" width="4.8" height="4" fill="#7A5634"/></g>`);
+    const box = spawn(
+      `<div class="tr-cup">${trGoblet(15)}<div class="tr-taint">${trGoblet(15, "#49C95A")}</div>${fizz}<div class="tr-skull" style="animation-delay:${f1(T * 0.55)}s">${skull}</div></div>` +
+      `<div class="tr-reach" style="--dur:${T}s">${hand}</div>${drops}`,
+      "tr-poison", `left:${f1(x)}vw;bottom:10.5vh`, T);
+    if (!box) return;
+    appear(box.querySelector(".tr-cup"), T, 0, 0.08, 0.9);
+    appear(box.querySelector(".tr-taint"), T, 0.38, 0.5, 0.9);
+  }
+
+  // candles out, and the room is full of eyes
+  function trBlackout() {
+    let eyes = "";
+    for (let i = 0; i < 9; i++) {
+      const b = rand(2.4, 4.2);
+      eyes += `<div class="tr-eyes" style="left:${f1(rand(3, 95))}vw;top:${f1(rand(14, 86))}vh;--ed:${f1(b)}s;animation-delay:${f1(rand(1.2, 3.4))}s;--es:${f1(rand(0.7, 1.3))}"><b></b><b></b></div>`;
+    }
+    spawn(`<div class="tr-dark"></div>${eyes}<div class="tr-who">Who did it?</div>`, "sc-burst sc-fade", "--dur:10s", 10);
+  }
+
+  // a parchment note drops in the gap between two taps
+  function trNote(inner, T = 10) {
+    return spawn(`<div class="tr-note"><i class="tr-seal"></i>${inner}</div>`, "tr-note-box", `left:${pick(TR_GAPS)}vw;--dur:${T}s`, T);
+  }
+  const trLetter = () => trNote(`<small>A note, left at your place</small><p>${pick([
+    "Trust no one", "One of you is lying", "Check your wine", "Meet me in the cellar",
+    "You have been murdered", "Don't finish that glass", "I know what you did", "Someone here is not your friend",
+  ])}</p>`);
+
+  // the board turns on the drinks: one of what's on tap gets accused
+  function trAccuse() {
+    const names = (app.state?.taps || []).map((t) => t.beer?.name).filter(Boolean);
+    trNote(`<small>The traitor is…</small><p class="who">${app.esc(names.length ? pick(names) : "The Host")}</p><b class="tr-stamp">Guilty</b>`);
+  }
+
+  // a hood slides out from behind a keg, has a look, and slips back
+  function trPeek() {
+    const kegs = [...document.querySelectorAll(".keg")];
+    if (!kegs.length) return;
+    const r = pick(kegs).getBoundingClientRect(), right = Math.random() < 0.5, T = 6;
+    const hood = svgH("8 0 46 48", 10,
+      `<path d="M32 2C18 2 13 16 15 30Q16 40 23 46L43 42Q49 30 46 17Q42 4 32 2Z" fill="${CLOTH}" stroke="${RIM}"/><path d="M35 13C28 14 26 23 28 30Q34 36 43 30Q46 21 42 15Q39 12 35 13Z" fill="#020102"/>` +
+      `<g class="tr-blink" fill="#FF4B3E"><ellipse cx="34" cy="23" rx="1.9" ry="1.2"/><ellipse cx="40.5" cy="23" rx="1.7" ry="1.2"/></g>`);
+    const left = right ? r.right - innerHeight * 0.096 : r.left;
+    const box = spawn(`<div style="transform:scaleX(${right ? 1 : -1})">${hood}</div>`, "tr-peek", `left:${Math.round(left)}px;top:${Math.round(r.top + r.height * 0.18)}px`, T);
+    if (!box) return;
+    const d = right ? "5.4vh" : "-5.4vh";
+    play$(box, [
+      { transform: "translateX(0)", opacity: 0, offset: 0 }, { transform: `translateX(${d})`, opacity: 1, offset: 0.16, easing: "ease-out" },
+      { transform: `translateX(${d})`, opacity: 1, offset: 0.78 }, { transform: "translateX(0)", opacity: 0, offset: 0.92 }, { transform: "translateX(0)", opacity: 0, offset: 1 }], T);
+  }
+
+  const RAVEN = `<path d="M22 9Q12 0 1 4Q7 7 7 11Q12 10 15 14Q19 11 22 12Q25 11 29 14Q32 10 37 11Q37 7 43 4Q32 0 22 9Z" fill="#08050A" stroke="${RIM}" stroke-width=".6"/>` +
+    `<ellipse cx="22" cy="11" rx="3.4" ry="5" fill="#08050A"/><path d="M22 15L20 21H24Z" fill="#08050A"/><circle cx="23.2" cy="8.6" r=".7" fill="#FF4B3E"/>`;
+
+  // two glasses clink, with varying degrees of sincerity
+  function trToast() {
+    const x = pick(TR_GAPS);
+    const sparks = Array.from({ length: 10 }, (_, i) => {
+      const a = (i / 10) * Math.PI * 2, r = rand(6, 10);
+      return `<i class="tr-spark" style="--dx:${f1(Math.cos(a) * r)}vh;--dy:${f1(Math.sin(a) * r)}vh"></i>`;
+    }).join("");
+    const word = pick(["Cheers!", "To the faithful!", "Trust me!", "To your health…"]);
+    spawn(`<div class="tr-clink l">${trGoblet(17)}</div><div class="tr-clink r">${trGoblet(17)}</div><div class="tr-sparks">${sparks}</div><div class="tr-cheers">${word}</div>`,
+      "tr-toast", `left:${x}vw`, 6);
+  }
+
+  SURPRISES.traitors = {
+    sneak: { w: 3, run: trSneak },
+    magnifier: { w: 3, run: trMagnifier },
+    murder: { w: 3, run: trMurder },
+    poison: { w: 2, run: trPoison },
+    peek: { w: 2, run: trPeek },
+    letter: { w: 1.6, run: trLetter },
+    accuse: { w: 1.6, run: trAccuse },
+    toast: { w: 1.5, run: trToast },
+    ravens: { w: 1.3, run: () => cross(flock(RAVEN, irand(3, 5), 7, 44), { y: rand(12, 24), dur: rand(9, 12), bob: "sc-flutter" }) },
+    blackout: { w: 1.2, run: trBlackout },
+  };
+
   // scene list for the console (seasons rotate under "auto"; the rest are themes)
   const FOOTBALL_ICON = `<ellipse cx="16" cy="16" rx="13" ry="8" fill="#9A5B2E" transform="rotate(-30 16 16)"/><path d="M11 19L21 13M13 15.4l1.6 2.6M15.6 13.8l1.6 2.6M18.2 12.2l1.6 2.6" stroke="#fff" stroke-width="1.4" stroke-linecap="round"/>`;
   const VOLLEYBALL_ICON = `<circle cx="16" cy="16" r="12" fill="#F7F7F2"/><path d="M16 4Q8 12 11 28M16 4Q24 12 21 28M4.5 13Q16 18 27.5 13" stroke="#9A9A92" stroke-width="1.4" fill="none"/><path d="M16 4Q24 12 21 28Q27 22 27.5 13Q24 6 16 4Z" fill="#D00000"/>`;
+  const TRAITORS_ICON = `<path d="M16 3C8 3 5 11 6 19Q4 24 3 29H29Q28 24 26 19Q27 11 16 3Z" fill="#7A1528"/><path d="M16 10C11.5 10 10 15 11.5 20Q16 23 20.5 20Q22 15 16 10Z" fill="#0B0608"/><circle cx="13.8" cy="16" r="1.3" fill="#FF4B3E"/><circle cx="18.2" cy="16" r="1.3" fill="#FF4B3E"/>`;
   const CATALOG = [
     { key: "spring", label: "Spring", seasonal: true },
     { key: "summer", label: "Summer", seasonal: true },
@@ -767,6 +1041,7 @@
     { key: "winter", label: "Winter", seasonal: true },
     { key: "gameday", label: "Game Day", icon: FOOTBALL_ICON },
     { key: "volleyball", label: "Volleyball", icon: VOLLEYBALL_ICON },
+    { key: "traitors", label: "Traitors", icon: TRAITORS_ICON },
   ];
 
   // ================================================================ engine
@@ -780,6 +1055,7 @@
   function build(season) {
     S.season = season;
     layer.dataset.season = season || "";
+    document.documentElement.dataset.scene = season || ""; // lets a scene recolor the whole board
     layer.innerHTML = season ? `<div class="sc-ambient">${AMBIENT[season]()}</div><div class="sc-actors"></div>` : "";
   }
 
