@@ -63,7 +63,10 @@ starts it again on every boot (`restart: unless-stopped`). From your Mac:
 ```
 
 Run `push.sh` again after any change. The display notices the server restarted and reloads itself.
-Your `data/` and `.env` on the Pi are never touched.
+It copies `data/config.toml` too, but never touches the database, logos or `.env` on the Pi.
+
+Or, if the Pi has a git clone: commit and push from your Mac, then on the Pi run
+`git pull && docker compose up -d --build`.
 
 Point the touch screen's kiosk browser at `http://localhost:8080/?kiosk=1`, the same way you did for
 Workout Pal. If you'd rather use a script, `deploy/kiosk.sh` waits for the app and then opens
@@ -163,12 +166,17 @@ data/
 It survives `docker compose down`, restarts and rebuilds. After editing `config.toml`, run
 `docker compose restart backend`. To back up, copy `data/` somewhere safe while the app is stopped.
 
+`config.toml` is the one file in `data/` that's tracked in git, so the Mac and the Pi share the same
+wiring. Edit it on the Mac and deploy, rather than editing it on the Pi. (Since the repo is public,
+don't put a console PIN you care about in it.) On a machine without GPIO (your Mac), any configured flow meters and the
+CO₂ relay are simulated automatically, and the backend log says so.
+
 ---
 
 ## Adding the hardware later
 
-Everything below is already supported in code. Wire it up, set the pins in `data/config.toml`,
-and restart. Each piece is optional and independent; the display only shows what's actually installed.
+Everything below is already supported in code. Wire it up, set the pins in `data/config.toml`
+(on the Mac, then deploy), and restart. Each piece is optional and independent; the display only shows what's actually installed.
 
 **First, give the container access to the GPIO pins** (one time):
 
@@ -230,7 +238,7 @@ A 12 V normally-closed solenoid valve on a gas line to the wine keg, driven by a
   default (`co2_relay_active_high = false`).
 - The solenoid must be powered from its own 12 V supply through the relay's COM/NO contacts.
   Put a flyback diode across the solenoid if the relay board doesn't have one.
-- Set `co2_relay_pin` on the wine tap in `data/config.toml` (tap 1 in the example config). That tap gets
+- Set `co2_relay_pin` on the wine tap in `data/config.toml` (already set to 24 on tap 1). That tap gets
   the **Charge CO2** button on the main screen (one pulse of the first `co2_boost_seconds` value), and
   the console offers every value in the list.
 

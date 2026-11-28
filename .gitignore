@@ -1,4 +1,6 @@
-data/
+# data/ holds the database and logos; only config.toml is tracked (one install, kept in sync via git)
+data/*
+!data/config.toml
 .env
 docker-compose.override.yml
 backend/.venv/

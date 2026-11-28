@@ -2,6 +2,7 @@
 from __future__ import annotations
 
 import logging
+from pathlib import Path
 
 from ..config import Config
 from ..db import Database
@@ -25,13 +26,31 @@ class Hardware:
                 else DS18B20(cfg.temp_sensor_id, cfg.temp_poll_seconds)
             )
 
+        # The same config.toml is used on the Mac and the Pi. Where there's no GPIO chip (a Mac,
+        # or a Pi without docker-compose.override.yml), simulate the pins that are configured.
+        simulate_gpio = False
         if not cfg.mock and any(t.has_flow or t.has_co2 for t in cfg.taps):
-            from gpiozero import Device
-            from gpiozero.pins.lgpio import LGPIOFactory
+            chip = Path(f"/dev/gpiochip{cfg.gpio_chip}")
+            if chip.exists():
+                from gpiozero import Device
+                from gpiozero.pins.lgpio import LGPIOFactory
 
-            Device.pin_factory = LGPIOFactory(chip=cfg.gpio_chip)
+                Device.pin_factory = LGPIOFactory(chip=cfg.gpio_chip)
+            else:
+                simulate_gpio = True
+                log.warning(
+                    "%s not found: flow meters and CO2 relay are SIMULATED. On the Pi, run "
+                    "`cp docker-compose.pi-hardware.yml docker-compose.override.yml && docker compose up -d`.",
+                    chip,
+                )
 
         for t in cfg.taps:
+            if simulate_gpio:
+                if t.has_flow:
+                    self.meters[t.id] = MockFlowMeter(t.id, t.pulses_per_liter)
+                if t.has_co2:
+                    self.relays[t.id] = MockCo2Relay(t.id, t.co2_max_seconds)
+                continue
             if cfg.mock:
                 # In mock mode every tap gets a pretend meter; relay only where configured
                 # (or on the first tap, so you can try the button).
