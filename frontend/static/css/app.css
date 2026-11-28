@@ -20,8 +20,10 @@
   --silver: #C9CED2;
   --silver-hi: #F1F3F4;
   --silver-deep: #7B8187;
-  --copper: #D97B4F;       /* alerts only: low keg, warm cabinet, CO2 */
+  --copper: #D97B4F;       /* alerts only: low keg, warm cabinet */
   --copper-deep: #A24E2A;
+  --wine: #9A2540;         /* Charge CO2 button; deep end matches the red-wine keg fill */
+  --wine-deep: #6E0F24;
   --ice: #8FC1CE;
   --panel: #383E26;
   --panel-hi: #424930;
@@ -243,7 +245,7 @@ body.kiosk, body.kiosk * { cursor: none !important; }
   width: 100%; max-width: 180px;
   display: flex; align-items: center; justify-content: center; gap: 8px;
   padding: clamp(8px, 1.6vh, 12px) 10px; border-radius: 10px;
-  background: linear-gradient(160deg, var(--copper), var(--copper-deep));
+  background: linear-gradient(160deg, var(--wine), var(--wine-deep));
   color: #fff5ee;
   font-family: var(--cond); font-weight: 700;
   font-size: clamp(13px, 2vh, 16px); letter-spacing: 1.5px; text-transform: uppercase;

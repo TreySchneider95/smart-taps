@@ -295,14 +295,23 @@
 
   function co2HTML(t) {
     if (!t.co2) return "";
-    const btns = t.co2.boost_seconds.map((s) => `<button class="btn copper" data-boost="${s}" ${t.co2.active ? "disabled" : ""}>${s}s</button>`).join("");
+    const secs = t.co2.charge_seconds;
+    const chips = t.co2.choices
+      .map((s) => `<button class="chip ${s === secs ? "on" : ""}" data-charge-time="${s}">${s}s</button>`).join("");
     return `
       <div class="panel-row ${t.co2.active ? "active" : ""}">
         <div class="label">
           <b>Charge CO2${t.co2.active ? " · charging…" : ""}</b>
           <div>A quick shot of gas to push it through the line.</div>
         </div>
-        ${btns}
+        <button class="btn copper" data-boost ${t.co2.active ? "disabled" : ""}>Charge · ${secs}s</button>
+      </div>
+      <div class="panel-row">
+        <div class="label">
+          <b>Charge time</b>
+          <div>How long each charge opens the gas, here and on the main screen (max ${t.co2.max_seconds}s).</div>
+        </div>
+        <div class="chips" style="margin:0">${chips}</div>
       </div>`;
   }
 
@@ -310,8 +319,20 @@
     d.querySelectorAll("[data-boost]").forEach((btn) =>
       btn.addEventListener("click", async () => {
         try {
-          const r = await api(`/api/taps/${t.id}/co2`, { seconds: Number(btn.dataset.boost) });
+          const r = await api(`/api/taps/${t.id}/co2`, {});
           toast(`CO₂ boost · ${r.seconds}s`);
+        } catch (e) { toast(e.message, true); }
+      })
+    );
+    d.querySelectorAll("[data-charge-time]").forEach((c) =>
+      c.addEventListener("click", async () => {
+        const seconds = Number(c.dataset.chargeTime);
+        if (seconds === t.co2.charge_seconds) return;
+        try {
+          await api(`/api/taps/${t.id}/co2/seconds`, { seconds });
+          t.co2.charge_seconds = seconds;
+          renderDetail();
+          toast(`Charge time · ${seconds}s`);
         } catch (e) { toast(e.message, true); }
       })
     );
@@ -561,7 +582,7 @@
 
   // ---------- live updates while open ----------
   function detailKey(t) {
-    return JSON.stringify([t.beer?.id, t.beer?.logo_url, t.beer?.bubbles, t.keg?.id, t.keg && Math.round(t.keg.remaining_pct * 100), t.co2?.active]);
+    return JSON.stringify([t.beer?.id, t.beer?.logo_url, t.beer?.bubbles, t.keg?.id, t.keg && Math.round(t.keg.remaining_pct * 100), t.co2?.active, t.co2?.charge_seconds]);
   }
 
   app.onState(() => {

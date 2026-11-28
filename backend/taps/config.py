@@ -22,7 +22,7 @@ class TapConfig:
     pulses_per_liter: float = 5600.0
     co2_relay_pin: int = 0
     co2_relay_active_high: bool = False
-    co2_boost_seconds: list[float] = field(default_factory=lambda: [2, 5])
+    co2_charge_seconds: float = 2.0   # default charge time; the console can change it per tap
     co2_max_seconds: float = 10.0
 
     @property
@@ -98,7 +98,13 @@ def load() -> Config:
     )
     if "taps" in raw:
         known = set(TapConfig.__dataclass_fields__)
-        cfg.taps = [TapConfig(**{k: v for k, v in t.items() if k in known}) for t in raw["taps"]]
+        cfg.taps = []
+        for t in raw["taps"]:
+            t = dict(t)
+            # older configs: co2_boost_seconds = [main button, ...]
+            if "co2_charge_seconds" not in t and t.get("co2_boost_seconds"):
+                t["co2_charge_seconds"] = t["co2_boost_seconds"][0]
+            cfg.taps.append(TapConfig(**{k: v for k, v in t.items() if k in known}))
     if os.environ.get("TAPS_DB"):
         cfg.db_path = Path(os.environ["TAPS_DB"])
     return cfg

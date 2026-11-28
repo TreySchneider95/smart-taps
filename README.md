@@ -239,8 +239,9 @@ A 12 V normally-closed solenoid valve on a gas line to the wine keg, driven by a
 - The solenoid must be powered from its own 12 V supply through the relay's COM/NO contacts.
   Put a flyback diode across the solenoid if the relay board doesn't have one.
 - Set `co2_relay_pin` on the wine tap in `data/config.toml` (already set to 24 on tap 1). That tap gets
-  the **Charge CO2** button on the main screen (one pulse of the first `co2_boost_seconds` value), and
-  the console offers every value in the list.
+  the **Charge CO2** button on the main screen. Each charge opens the gas for the tap's **Charge time**,
+  which you pick in the console (tap → Charge time). `co2_charge_seconds` is the starting value, and
+  `co2_max_seconds` caps what the console offers.
 
 Safety: the main-screen button isn't behind the PIN, so anyone pouring wine can use it. Every charge is a
 timed pulse with a hard cap (`co2_max_seconds`, default 10 s) enforced by the server, plus a short

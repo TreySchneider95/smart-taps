@@ -42,7 +42,7 @@ flow_pin = 0
 pulses_per_liter = 5600
 co2_relay_pin = 24              # relay module IN -> GPIO24 (header pin 18)
 co2_relay_active_high = false   # most cheap relay boards are active-low
-co2_boost_seconds = [2, 5]      # first one is the main-screen button; console shows all
+co2_charge_seconds = 10         # default charge time; change it in the console (Charge time)
 co2_max_seconds = 10            # hard safety cap per boost
 
 [[taps]]

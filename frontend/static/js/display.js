@@ -190,7 +190,7 @@
       const res = await fetch(`/api/taps/${tap.id}/co2`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ seconds: tap.co2.boost_seconds?.[0] ?? 2 }),
+        body: JSON.stringify({}), // the server uses the tap's charge time (set in the console)
       });
       if (!res.ok) throw new Error();
     } catch {

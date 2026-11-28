@@ -33,7 +33,15 @@ class AssignBody(BaseModel):
 
 
 class BoostBody(BaseModel):
+    seconds: float | None = None   # omitted = the tap's saved charge time
+
+
+class ChargeTimeBody(BaseModel):
     seconds: float
+
+
+CHARGE_MIN_SECONDS = 1.0
+CHARGE_CHOICES = [1, 2, 3, 5, 7, 10, 15, 20]   # offered in the console, up to the tap's co2_max_seconds
 
 
 class PinBody(BaseModel):
@@ -145,6 +153,16 @@ def create_app(cfg: config_mod.Config | None = None) -> FastAPI:
                 "scene": pick("scene", SCENES), "surprises": pick("surprises", SURPRISES),
                 "fizz": pick("fizz", FIZZ)}
 
+    def charge_seconds(tc) -> float:
+        """How long one charge opens the gas: set in the console, else config.toml; never past the cap."""
+        saved = (db.get_setting("co2_charge_seconds") or {}).get(str(tc.id))
+        secs = float(saved if saved is not None else tc.co2_charge_seconds)
+        return max(CHARGE_MIN_SECONDS, min(secs, tc.co2_max_seconds))
+
+    def charge_choices(tc) -> list[float]:
+        opts = {c for c in CHARGE_CHOICES if c <= tc.co2_max_seconds} | {tc.co2_max_seconds, charge_seconds(tc)}
+        return sorted(int(c) if float(c).is_integer() else c for c in opts)
+
     def tap_state() -> list[dict]:
         rows = {r["tap_id"]: r for r in db.tap_rows()}
         out = []
@@ -179,8 +197,9 @@ def create_app(cfg: config_mod.Config | None = None) -> FastAPI:
                 "pouring": bool(meter and meter.pouring),
                 "co2": None if not relay else {
                     "active": relay.active,
-                    "boost_seconds": tc.co2_boost_seconds,
+                    "charge_seconds": charge_seconds(tc),
                     "max_seconds": tc.co2_max_seconds,
+                    "choices": charge_choices(tc),
                 },
             })
         return out
@@ -276,13 +295,26 @@ def create_app(cfg: config_mod.Config | None = None) -> FastAPI:
     @app.post("/api/taps/{tap_id}/co2")
     def co2(tap_id: int, body: BoostBody):
         relay = hw.relays.get(tap_id)
-        if not relay:
+        tc = cfg.tap(tap_id)
+        if not relay or not tc:
             raise HTTPException(404, "No CO2 relay on this tap")
         try:
-            secs = relay.boost(body.seconds)
+            secs = relay.boost(body.seconds if body.seconds is not None else charge_seconds(tc))
         except RuntimeError as e:
             raise HTTPException(409, str(e))
         return {"ok": True, "seconds": secs}
+
+    @app.post("/api/taps/{tap_id}/co2/seconds", dependencies=[Depends(require_pin)])
+    def set_charge_time(tap_id: int, body: ChargeTimeBody):
+        tc = cfg.tap(tap_id)
+        if not tc or tap_id not in hw.relays:
+            raise HTTPException(404, "No CO2 relay on this tap")
+        if not CHARGE_MIN_SECONDS <= body.seconds <= tc.co2_max_seconds:
+            raise HTTPException(400, f"Charge time must be {CHARGE_MIN_SECONDS:g}–{tc.co2_max_seconds:g} seconds")
+        saved = db.get_setting("co2_charge_seconds") or {}
+        saved[str(tap_id)] = body.seconds
+        db.set_setting("co2_charge_seconds", saved)
+        return {"ok": True, "seconds": charge_seconds(tc)}
 
     @app.post("/api/dev/pour/{tap_id}")
     def dev_pour(tap_id: int, ml: float = 473):
